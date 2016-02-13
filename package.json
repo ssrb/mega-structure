@@ -1,0 +1,23 @@
+{
+  "name": "mega-structure",
+  "version": "1.0.0",
+  "description": "A structure synth clone",
+  "main": "mega-structure.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ssrb/mega-structure.git"
+  },
+  "keywords": [
+    "generative",
+    "art"
+  ],
+  "author": "ssrb",
+  "license": "BSD-2-Clause",
+  "bugs": {
+    "url": "https://github.com/ssrb/mega-structure/issues"
+  },
+  "homepage": "https://github.com/ssrb/mega-structure#readme"
+}

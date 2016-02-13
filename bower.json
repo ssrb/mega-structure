@@ -1,0 +1,22 @@
+{
+  "name": "mega-structure",
+  "description": "A structure synth clone",
+  "main": "mega-structure.js",
+  "authors": [
+    "ssrb"
+  ],
+  "license": "BSD-2-Clause",
+  "keywords": [
+    "generative",
+    "art"
+  ],
+  "homepage": "https://github.com/ssrb/mega-structure",
+  "moduleType": [],
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
