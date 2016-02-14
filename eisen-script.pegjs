@@ -24,25 +24,62 @@
 // The views and conclusions contained in the software and documentation are those
 // of the authors and should not be interpreted as representing official policies,
 // either expressed or implied, of the FreeBSD Project.
+{
+	function extractOptional(optional, index) {
+    	return optional ? optional[index] : null;
+  	}
+  
+	function optionalList(value) {
+		return value !== null ? value : [];
+  	}
+    
+    function buildList(head, tail, index) {
+      return [head].concat(extractList(tail, index));
+    }
+  
+    function extractList(list, index) {
+      var result = new Array(list.length), i;
+
+      for (i = 0; i < list.length; i++) {
+        result[i] = list[i][index];
+      }
+
+      return result;
+    }
+}
+
 Start = Statements
 
 Statements "statements"
-	=  _? Statement (_ Statement)* _?
+	=  _? head:Statement tail:(_ Statement)*  _? {
+    	return buildList(head, tail, 1);
+    }
 
 Statement "statement"
-	=  (Action / RAction / RuleDef)
+	=  SetStatement / TopLevelRuleInvoc / RuleDef
 
 RuleDef "rule definition" 
-	= "rule" _ RName (_ RModifier)* _? "{" _? (RAction (_ RAction)*)? _? "}"
+	= "rule" _ name:RuleName modifiers:(_ RuleModifier)* _? "{" 
+    		_? production:(head:RuleInvoc tail:(_ RuleInvoc)* {return buildList(head, tail, 1);})? _? 
+       "}" {
+    	return {name, modifiers: extractList(modifiers, 1), production}
+    }
     
-RModifier "rule modifier"
+RuleModifier "rule modifier"
 	= MMaxdepth / MWeight
 
-RName "rule name"
-	= !Reserved Identifier
-
-RAction "raction"
-	= (Multiplier? "{" _? (Trans (_ Trans)*)? _?"}")* _? (RName / Primitive)
+RuleName "rule name"
+	= !(Reserved _) identifier:Identifier {
+    	return identifier
+    }
+    
+TopLevelRuleInvoc
+	= RuleInvoc
+    
+RuleInvoc "rule invocation"
+	= transformations:(multiplier:Multiplier? "{" _? sequence:(head:Trans tail:(_ Trans)* {return buildList(head, tail, 1);})? _?"}" { return {multiplier, sequence}; })* _? next:(RuleName / Primitive) {
+    	return {transformations, next}
+    }
 
 Multiplier "multiplier"
 	= Integer _? "*" _?
@@ -53,34 +90,52 @@ Trans "transformation"
 // 3D-space transforms
 
 Tx "translate x"
-	= "x" _ Float
+	= "x" _ dx:Float {
+    	return {x: dx}
+    }
     
 Ty "translate y"
-	= "y" _ Float
+	= "y" _ dy:Float {
+    	return {y: dy}
+    }
     
 Tz "translate z"
-	= "x" _ Float
+	= "z" _ dz:Float {
+    	return {z: dz}
+    }
     
 Rx "rotate x"
-	= "rx" _ Float
+	= "rx" _ theta:Float {
+    	return {rx: theta}
+    }
     
 Ry "rotate y"
-	= "ry" _ Float
+	= "ry" _ theta:Float {
+    	return {ry: theta}
+    }
     
 Rz "rotate z"
-	= "rz" _ Float
+	= "rz" _ theta:Float {
+    	return {rz: theta}
+    }
 
 Scale "scale"
-	= "s" _ Float _ Float _ Float
+	= "s" _ Float (_ Float _ Float)?
     
 Fx "flip x"
-	= "fx"
+	= "fx" {
+    	return {fx}
+    }
 
 Fy "flip y"
-	= "fy"
+	= "fy" {
+    	return {fy}
+    }
     
 Fz "flip z"
-	= "fz"
+	= "fz" {
+    	return {fz}
+    }
 
 Matrix "matrix"
 	= "m" _ Float _ Float _ Float _ Float _ Float _ Float _ Float _ Float _ Float
@@ -88,16 +143,28 @@ Matrix "matrix"
 // Colorspace transforms
 
 Hue "hue"
-	= ("h" / "hue") _ Float
+	= "h" _ hue:Float {
+    	return {hue};
+    }
+    / "hue" _ hue:Float {
+    	return {hue};
+    }
     
 Sat "saturation"
-	= "sat" _ Float
+	= "sat" _ sat:Float {
+    	return {sat};
+    }
     
 Bright "brightness"
- 	= ("b" / "brightness") _ Float
+ 	= "b" _ brightness:Float {
+    	return {brightness};
+    }
+    / "brightness" _ Float  {
+    	return {brightness};
+    }
  
 Alpha "alpha"
- 	= ("a" / "alpha") _ Float
+ 	= ("a" _ Float) / ("alpha" _ Float)
  
 SetColor "set color"
 	= "color" _ Color
@@ -110,52 +177,69 @@ Blend "blend"
 // set colorpool [scheme]
 
 MMaxdepth "maxdepth modifier"
-	= ("md" / "maxdepth") _ Integer (_? ">" _? RName)?
+	= ("md" / "maxdepth") _ Integer (_? ">" _? RuleName)?
 
 MWeight "weight modifier"
-	= ("w" / "weight") _ Float
+	= ("w" _ Float) / ("weight" _ Float) 
 
 Primitive "drawing primitive"
 	= "box" / "grid" / "sphere" / "line" / "point" / "triangle" / "mesh" / "cylinder" / "tube"
 
-Action "action"
-	= "set" _ (AMaxdepth / AMaxObjects / AMinsize / ANaxsize / ASeed / ABackground)
+SetStatement "set statement"
+	= "set" _ (Maxdepth / MaxObjects / Minsize / Naxsize / Seed / Background)
 
-AMaxdepth "maxdepth action"
+Maxdepth "maxdepth action"
 	= "maxdepth" _ Integer
     
-AMaxObjects"maxobjects action"
+MaxObjects"maxobjects action"
 	= "maxobjects" _ Integer
 
-AMinsize "minsize action"
+Minsize "minsize action"
 	= "minsize" _ Float
 
-ANaxsize "maxsize action"
+Naxsize "maxsize action"
 	=  "maxsize" _ Float
     
-ASeed "seed action"
+Seed "seed action"
 	= "seed" _ (Integer / "initial")
 
-ABackground "background action"
+Background "background action"
 	= "background" _ Color
 
-Digit "digit"
+DecimalDigit
 	= [0-9]
+
+NonZeroDigit
+	= [1-9]
+
+HexDigit "hex digit"
+	= [0-9a-f]i
     
-Letter "letter"
-	= [a-zA-Z]
+Character "character"
+	= [a-z]i
 
-Integer "integer"
-	= Digit+ { return parseInt(text(), 10); }
+UnsignedInteger "integer"
+	= "0" / NonZeroDigit DecimalDigit*
+    
+Integer
+	= [+-]? UnsignedInteger
 
+ExponentPart
+	= ExponentIndicator Integer
+
+ExponentIndicator
+	= "e"i
+  
 Float "float"
-	= Digit+ { return parseInt(text(), 10); }
+	= (Integer "." DecimalDigit* ExponentPart? / "." DecimalDigit+ ExponentPart? / Integer ExponentPart?) {
+       return parseFloat(text());
+    }
 
 Color "color"
-	= "color"
+	= "#" HexDigit HexDigit HexDigit (HexDigit HexDigit HexDigit)?
     
 Identifier "identifier"
-	= ("_" / Letter) ("_" / Letter / Digit)*
+	= head:("_" / Character) tail:("_" / Character / DecimalDigit)* { return head + tail.join("") }
 
 _ "whitespace"
 	= [ \t\n\r]+
