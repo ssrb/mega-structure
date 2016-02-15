@@ -1,0 +1,15 @@
+language: node_js
+node_js:
+- '4.1'
+before_install:
+- openssl aes-256-cbc -K $encrypted_7b72a74a59ba_key -iv $encrypted_7b72a74a59ba_iv
+  -in secrets.tar.enc -out secrets.tar -d
+- tar xvf secrets.tar
+- chmod 600 deploy_key
+- cp deploy_key ~/.ssh/id_rsa
+before_script:
+- npm install -g gulp
+script: 
+- gulp
+- bash deploy
+
