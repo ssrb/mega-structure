@@ -1,0 +1,12 @@
+{
+  "version": "v4",
+  "repo": "borisyankov/DefinitelyTyped",
+  "ref": "master",
+  "path": "typings",
+  "bundle": "typings/tsd.d.ts",
+  "installed": {
+    "pegjs/pegjs.d.ts": {
+      "commit": "b45475991fee80533869ed86d70a96bf8d1aaf5b"
+    }
+  }
+}
