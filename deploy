@@ -4,6 +4,7 @@ mkdir _site
 cd _site
 cp ../mega-structure.html .
 cp ../bundle.js .
+cp -r ../examples .
 git init
 git config --global user.email "sb@unhexhexium.net"
 git config --global user.name "ssrb (via Travis CI)"
