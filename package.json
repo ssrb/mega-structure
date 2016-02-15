@@ -25,6 +25,7 @@
     "browserify-shader": "^0.1.2",
     "gulp": "^3.9.1",
     "gulp-bower": "0.0.13",
+    "gulp-peg": "^0.2.0",
     "gulp-tsd": "^0.1.0",
     "run-sequence": "^1.1.5",
     "tsify": "^0.13.2",

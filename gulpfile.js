@@ -7,6 +7,8 @@ var tsify = require('tsify');
 var uglify = require('uglifyify');
 var tsd = require('gulp-tsd');
 var runSequence = require('run-sequence');
+var peg = require('gulp-peg');
+var gutil = require('gulp-util');
 
 gulp.task('.bower.install', function () {
     var bower = require('gulp-bower');
@@ -47,6 +49,12 @@ gulp.task('watch', function() {
     return rebundle();
 });
 
+gulp.task('.peg', function() {
+    return gulp.src( "eisen-script.peg" )
+    .pipe( peg().on( "error", gutil.log ) )
+    .pipe( gulp.dest('.') )
+});
+
 gulp.task('.mega-structure', function() {
     var bundler = browserify({debug: true})
         .add('./synthesizer.ts')
@@ -61,7 +69,8 @@ gulp.task('.mega-structure', function() {
 
 gulp.task('default', function(callback) {
     runSequence('.bower.install',
-                '.tsd.install',            
+                '.tsd.install',
+                '.peg',
                 '.mega-structure',
                 callback);
 });
