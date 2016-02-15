@@ -7,6 +7,12 @@
   "installed": {
     "pegjs/pegjs.d.ts": {
       "commit": "b45475991fee80533869ed86d70a96bf8d1aaf5b"
+    },
+    "browserify/browserify.d.ts": {
+      "commit": "b45475991fee80533869ed86d70a96bf8d1aaf5b"
+    },
+    "node/node.d.ts": {
+      "commit": "b45475991fee80533869ed86d70a96bf8d1aaf5b"
     }
   }
 }
