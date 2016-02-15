@@ -24,3 +24,31 @@
 // The views and conclusions contained in the software and documentation are those
 // of the authors and should not be interpreted as representing official policies,
 // either expressed or implied, of the FreeBSD Project.
+
+///<reference path="typings/browserify/browserify.d.ts"/>
+///<reference path="typings/pegjs/pegjs.d.ts"/>
+var eisenscript = require('./eisen-script');
+
+// Temporary, used to test the parser without any ui
+window.onload = () => {
+    var scriptreq = new XMLHttpRequest();
+    scriptreq.open('GET', './examples/mondrian_nc.es');
+    scriptreq.onload = function() {
+		var synth = new Synthesizer(scriptreq.responseText);
+		synth.synthesize()
+	}
+	scriptreq.send();
+}
+
+class Synthesizer {
+
+	constructor(script : string) {
+		this.ast = eisenscript.parse(script);
+	}
+
+	public synthesize() : void {
+		
+	}
+
+	ast: any;
+}
