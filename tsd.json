@@ -13,6 +13,9 @@
     },
     "node/node.d.ts": {
       "commit": "b45475991fee80533869ed86d70a96bf8d1aaf5b"
+    },
+    "gl-matrix/gl-matrix.d.ts": {
+      "commit": "85af69c91599a6c904618545f0613970e1ff3f64"
     }
   }
 }

@@ -58,6 +58,7 @@ gulp.task('.peg', function() {
 gulp.task('.mega-structure', function() {
     var bundler = browserify({debug: true})
         .add('./synthesizer.ts')
+        .add('./node_modules/typescript-collections/collections.ts')
         .plugin(tsify)
         .transform(browserifyShader)
     
