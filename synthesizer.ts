@@ -53,7 +53,7 @@ interface DefStatement extends Statement {
 	weight: number;
 	maxdepth: number;
 	failover: string;
-	production: any[];
+	production: InvocStatement[];
 }
 
 interface InvocStatement extends Statement {
@@ -69,6 +69,12 @@ interface SynthFrame {
 	rule: string;
 	depth: number;
 	matrix: Float32Array;
+}
+
+interface ShapeInstance {
+	shape: any;
+	geospace: Float32Array;
+	colorspace: Float32Array;
 }
 
 class Synthesizer {
@@ -113,22 +119,31 @@ class Synthesizer {
 		}		
 	}
 
-	public synthesize(): number[] {
+	public synthesize(): ShapeInstance[] {
 
-		var shapes = new Array<number>();
-			
-		// TODO loop over all top level statements: some statement are rule invocation, some are set statement
-		shapes.concat(this.synthesizeOne(""));
-
+		var shapes = new Array<ShapeInstance>();
+				
+		for (var si = 0; si < this.ast.length; ++si) {
+			switch (this.ast[si].type) {
+				case "invoc":
+					var invoc = <InvocStatement>this.ast[si];
+					// TODO handle transformations at top level
+					shapes.concat(this.synthesizeOne(invoc.next));
+					break;
+				case "set":
+					break;
+			}
+		}
+		
 		return shapes;
 	}
 
-	public synthesizeOne(start : string): number[] {
+	public synthesizeOne(start: string): ShapeInstance[] {
 
 		var stack = new collections.Stack<SynthFrame>();
 		stack.push({ rule: start, depth: 0, matrix: glmat.mat4.create() });
 
-		var shapes = new Array<number>();
+		var shapes = new Array<ShapeInstance>();
 		while (!stack.isEmpty()) {
 
 			if (shapes.length >= this.maxObjects) {
@@ -157,18 +172,21 @@ class Synthesizer {
 
 
 			for (var pi = 0; pi < clause.production.length; ++pi) {
-				var matrices = this.applyTransform(/* transform : TODO , */matrix);			
+
+				var prod = clause.production[pi];
+
+				var matrices = this.applyTransform(prod.transformations, matrix);			
 				// if shape: 
 				{
 					for (var mi = 0; mi < matrices.length; ++mi) {
-						shapes.push(42);
+						shapes.push({ shape: 42, geospace: matrix, colorspace: glmat.mat4.create()});
 					}
 				} 
 				// else if call
 				{
 					for (var mi = 0; mi < matrices.length; ++mi) {
 						var next = "";
-						stack.push({ rule: next, depth : depth + 1, matrix: matrices[mi]});
+						stack.push({ rule: prod.next, depth : depth + 1, matrix: matrices[mi] });
 					}
 				}
 
@@ -179,7 +197,7 @@ class Synthesizer {
 		return shapes;
 	}	
 
-	private applyTransform(/* transform : TODO , */matrix: Float32Array): Float32Array[] {
+	private applyTransform(transform : any, matrix: Float32Array): Float32Array[] {
 		// TODO : account for multipliers and chain of transformations
 		return [];
 	}
