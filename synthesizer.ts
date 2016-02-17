@@ -68,7 +68,8 @@ interface SetStatement extends Statement {
 interface SynthFrame {
 	rule: string;
 	depth: number;
-	matrix: Float32Array;
+	geospace: Float32Array;
+	colorspace: Float32Array;
 }
 
 interface ShapeInstance {
@@ -141,7 +142,7 @@ class Synthesizer {
 	public synthesizeOne(start: string): ShapeInstance[] {
 
 		var stack = new collections.Stack<SynthFrame>();
-		stack.push({ rule: start, depth: 0, matrix: glmat.mat4.create() });
+		stack.push({ rule: start, depth: 0, geospace: glmat.mat4.create(), colorspace: glmat.mat4.create()});
 
 		var shapes = new Array<ShapeInstance>();
 		while (!stack.isEmpty()) {
@@ -158,14 +159,14 @@ class Synthesizer {
 				continue;
 			}
 
-			var {rule, depth, matrix} = stack.pop();
+			var {rule, depth, geospace, colorspace} = stack.pop();
 
 			var clause = this.pickClause(rule);
 
 			var localMaxDepth = clause.maxdepth;
 			if (localMaxDepth >= 0 && depth >= localMaxDepth) {
 				if (clause.failover) {
-					stack.push({ rule: clause.failover, depth: 0, matrix });
+					stack.push({ rule: clause.failover, depth: 0, geospace, colorspace });
 				}
 				continue;
 			}
@@ -175,18 +176,18 @@ class Synthesizer {
 
 				var prod = clause.production[pi];
 
-				var matrices = this.applyTransform(prod.transformations, matrix);			
+				var [geospaces, colorspaces] = this.applyTransform(prod.transformations, geospace, colorspace);			
 				// if shape: 
 				{
-					for (var mi = 0; mi < matrices.length; ++mi) {
-						shapes.push({ shape: 42, geospace: matrix, colorspace: glmat.mat4.create()});
+					for (var mi = 0; mi < geospaces.length; ++mi) {
+						shapes.push({ shape: 42, geospace: geospaces[mi], colorspace: colorspaces[mi] });
 					}
 				} 
 				// else if call
 				{
-					for (var mi = 0; mi < matrices.length; ++mi) {
+					for (var mi = 0; mi < geospaces.length; ++mi) {
 						var next = "";
-						stack.push({ rule: prod.next, depth : depth + 1, matrix: matrices[mi] });
+						stack.push({ rule: prod.next, depth: depth + 1, geospace: geospaces[mi], colorspace: colorspaces[mi] });
 					}
 				}
 
@@ -197,9 +198,9 @@ class Synthesizer {
 		return shapes;
 	}	
 
-	private applyTransform(transform : any, matrix: Float32Array): Float32Array[] {
+	private applyTransform(transform: any, geospace: Float32Array, colorspace: Float32Array): [Float32Array[], Float32Array[]] {
 		// TODO : account for multipliers and chain of transformations
-		return [];
+		return [[], []];
 	}
 
 	ast: Statement[];
