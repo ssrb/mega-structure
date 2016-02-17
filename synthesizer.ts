@@ -39,9 +39,30 @@ window.onload = () => {
     scriptreq.open('GET', './examples/mondrian_nc.es');
     scriptreq.onload = function() {
 		var synth = new Synthesizer(scriptreq.responseText);
-		// synth.synthesize()
+		synth.synthesize()
 	}
 	scriptreq.send();
+}
+
+interface Statement {
+	type: string;
+}
+
+interface DefStatement extends Statement {
+	rule: string;
+	weight: number;
+	maxdepth: number;
+	failover: string;
+	production: any[];
+}
+
+interface InvocStatement extends Statement {
+	transformations: any[];
+	next: string;
+}
+
+interface SetStatement extends Statement {
+	// TODO
 }
 
 interface SynthFrame {
@@ -53,9 +74,43 @@ interface SynthFrame {
 class Synthesizer {
 
 	constructor(script : string) {
-		// TODO: seed RNG
-		this.ast = eisenscript.parse(script);
-		// TODO: index the rules using a hash table + precompute the sum of the weights + sort by decreasing weight
+		// TODO: seed RNG ?
+		this.ast = <Statement[]>eisenscript.parse(script);
+		this.index = Synthesizer.indexRules(this.ast);	
+	}
+
+	private static indexRules(ast: Statement[]): collections.Dictionary<string, [number, DefStatement[]]> {		
+		var index = new collections.Dictionary<string, [number, DefStatement[]]>();
+		for (var si = 0; si < ast.length; ++si) {
+			if (ast[si].type == "def") {
+				var def = <DefStatement>ast[si];
+				var wclauses = index.getValue(def.rule);
+				if (!wclauses) {
+					wclauses = [0, []];
+					index.setValue(def.rule, wclauses);
+				}
+				wclauses[0] += def.weight;
+				wclauses[1].push(def);
+			}
+		}
+		index.forEach(function(rule: string, wclauses: [number, DefStatement[]]): void {
+			wclauses[1].sort(function(left: DefStatement, right: DefStatement): number {
+				return left.weight - right.weight;
+			});
+		});		
+		return index;
+	}
+
+	private pickClause(rule: string): DefStatement {
+		var wclauses = this.index.getValue(rule);
+		var guess = wclauses[0] * Math.random();
+		for (var ci = 0; ci < wclauses[1].length; ++ci) {
+			var clause = wclauses[1][ci];
+			guess -= clause.weight;
+			if (guess < 0) {
+				return clause;
+			}
+		}		
 	}
 
 	public synthesize(): number[] {
@@ -71,7 +126,7 @@ class Synthesizer {
 	public synthesizeOne(start : string): number[] {
 
 		var stack = new collections.Stack<SynthFrame>();
-		stack.push({ rule: this.pickClause(start), depth: 0, matrix: glmat.mat4.create() });
+		stack.push({ rule: start, depth: 0, matrix: glmat.mat4.create() });
 
 		var shapes = new Array<number>();
 		while (!stack.isEmpty()) {
@@ -90,21 +145,18 @@ class Synthesizer {
 
 			var {rule, depth, matrix} = stack.pop();
 
-			// TODO: check rule maxdepth
-			var localMaxDepth = this.maxDepth;
+			var clause = this.pickClause(rule);
 
-			if (depth >= localMaxDepth) {
-				// TODO: check the failover rule if any
-				{
-					var failover = this.pickClause("");
-					stack.push({ rule: failover, depth: 0, matrix });
+			var localMaxDepth = clause.maxdepth;
+			if (localMaxDepth >= 0 && depth >= localMaxDepth) {
+				if (clause.failover) {
+					stack.push({ rule: clause.failover, depth: 0, matrix });
 				}
 				continue;
 			}
 
 
-			// foreach rule statement
-			{				
+			for (var pi = 0; pi < clause.production.length; ++pi) {
 				var matrices = this.applyTransform(/* transform : TODO , */matrix);			
 				// if shape: 
 				{
@@ -127,17 +179,13 @@ class Synthesizer {
 		return shapes;
 	}	
 
-	private pickClause(ruleName: string) : string {
-		// TODO look-up the index for ruleName, choose a clause at random accordingly to the weights
-		return "";
-	}
-		
 	private applyTransform(/* transform : TODO , */matrix: Float32Array): Float32Array[] {
 		// TODO : account for multipliers and chain of transformations
 		return [];
 	}
 
-	ast: any;
+	ast: Statement[];
 	maxObjects: number;
 	maxDepth: number;
+	index: collections.Dictionary<string, [number, DefStatement[]]>;
 }
