@@ -57,7 +57,7 @@ interface DefStatement extends ASTNode {
 }
 
 interface InvocStatement extends ASTNode {
-	transformations: any[];
+	transformations: Transformation[];
 	next: NextNode;
 }
 
@@ -67,6 +67,11 @@ interface SetStatement extends ASTNode {
 
 interface NextNode extends ASTNode {
 	name: string;
+}
+
+interface Transformation {
+	multiplier: number;
+	sequence: any[];
 }
 
 interface SynthFrame {
@@ -87,7 +92,7 @@ class Synthesizer {
 	constructor(script : string) {
 		// TODO: seed RNG ?
 		this.ast = <ASTNode[]>eisenscript.parse(script);
-		this.index = Synthesizer.indexRules(this.ast);	
+		this.index = Synthesizer.indexRules(this.ast);
 	}
 
 	private static indexRules(ast: ASTNode[]): collections.Dictionary<string, [number, DefStatement[]]> {		
@@ -175,6 +180,9 @@ class Synthesizer {
 			}
 
 			for (var pi = 0; pi < clause.production.length; ++pi) {
+
+				// TODO: double check geospace & colorspace are unchanged between calls, take a copy if needed
+
 				this.synthProduction(clause.production[pi], depth + 1, geospace, colorspace, stack, shapes);
 			}
 		}
@@ -189,7 +197,7 @@ class Synthesizer {
 						stack: collections.Stack<SynthFrame>, 
 						shapes: ShapeInstance[]) : void {
 
-		var [childGeospaces, childColorspaces] = this.applyTransform(prod.transformations, geospace, colorspace);
+		var [childGeospaces, childColorspaces] = this.transform(prod.transformations, geospace, colorspace);
 
 		console.assert(childGeospaces.length == childColorspaces.length);
 
@@ -207,9 +215,37 @@ class Synthesizer {
 		}
 	}
 
-	private applyTransform(transform: any, geospace: Float32Array, colorspace: Float32Array): [Float32Array[], Float32Array[]] {
-		// TODO : account for multipliers and chain of transformations
-		return [[], []];
+	private transform(transforms: Transformation[], geospace: Float32Array, colorspace: Float32Array): [Float32Array[], Float32Array[]] {
+				
+		var childGeospaces = new Array<Float32Array>();
+		var childColorspaces = new Array<Float32Array>();
+
+		var stack = new collections.Stack<[number, Float32Array, Float32Array]>();
+		stack.push([0, geospace, colorspace]);
+		while (!stack.isEmpty()) {
+
+			var [ti, childGeospace, childColorSpace] = stack.pop();
+			var trans = transforms[ti];
+			
+			for (var repeat = 0; repeat < trans.multiplier; ++repeat) {
+				
+				var [childGeospace, childColorSpace] = this.transformOne(transforms[ti].sequence, childGeospace, childColorSpace);
+
+				if (ti == transforms.length) {
+					childGeospaces.push(childGeospace);
+					childColorspaces.push(childColorSpace);
+				} else {
+					stack.push([ti + 1, childGeospace, childColorSpace]);
+				}
+			}
+
+		};
+
+		return [childGeospaces, childColorspaces];
+	}
+
+	private transformOne(sequence: any, geospace: Float32Array, colorspace: Float32Array): [Float32Array, Float32Array] {
+		return [glmat.mat4.create(), glmat.mat4.create()];
 	}
 
 	ast: ASTNode[];
