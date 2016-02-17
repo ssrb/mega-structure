@@ -44,11 +44,11 @@ window.onload = () => {
 	scriptreq.send();
 }
 
-interface Statement {
+interface ASTNode {
 	type: string;
 }
 
-interface DefStatement extends Statement {
+interface DefStatement extends ASTNode {
 	rule: string;
 	weight: number;
 	maxdepth: number;
@@ -56,13 +56,17 @@ interface DefStatement extends Statement {
 	production: InvocStatement[];
 }
 
-interface InvocStatement extends Statement {
+interface InvocStatement extends ASTNode {
 	transformations: any[];
-	next: string;
+	next: NextNode;
 }
 
-interface SetStatement extends Statement {
+interface SetStatement extends ASTNode {
 	// TODO
+}
+
+interface NextNode extends ASTNode {
+	name: string;
 }
 
 interface SynthFrame {
@@ -82,11 +86,11 @@ class Synthesizer {
 
 	constructor(script : string) {
 		// TODO: seed RNG ?
-		this.ast = <Statement[]>eisenscript.parse(script);
+		this.ast = <ASTNode[]>eisenscript.parse(script);
 		this.index = Synthesizer.indexRules(this.ast);	
 	}
 
-	private static indexRules(ast: Statement[]): collections.Dictionary<string, [number, DefStatement[]]> {		
+	private static indexRules(ast: ASTNode[]): collections.Dictionary<string, [number, DefStatement[]]> {		
 		var index = new collections.Dictionary<string, [number, DefStatement[]]>();
 		for (var si = 0; si < ast.length; ++si) {
 			if (ast[si].type == "def") {
@@ -126,12 +130,11 @@ class Synthesizer {
 				
 		for (var si = 0; si < this.ast.length; ++si) {
 			switch (this.ast[si].type) {
-				case "invoc":
-					var invoc = <InvocStatement>this.ast[si];
-					// TODO handle transformations at top level
-					shapes.concat(this.synthesizeOne(invoc.next));
+				case "invoc":	
+					this.synthesizeOne(<InvocStatement>this.ast[si], shapes);
 					break;
 				case "set":
+					// TODO
 					break;
 			}
 		}
@@ -139,12 +142,12 @@ class Synthesizer {
 		return shapes;
 	}
 
-	public synthesizeOne(start: string): ShapeInstance[] {
-
+	private synthesizeOne(prod: InvocStatement, shapes: ShapeInstance[]) : void {
+	
 		var stack = new collections.Stack<SynthFrame>();
-		stack.push({ rule: start, depth: 0, geospace: glmat.mat4.create(), colorspace: glmat.mat4.create()});
 
-		var shapes = new Array<ShapeInstance>();
+		this.synthProduction(prod, 0, glmat.mat4.create(), glmat.mat4.create(), stack, shapes);
+		
 		while (!stack.isEmpty()) {
 
 			if (shapes.length >= this.maxObjects) {
@@ -171,39 +174,45 @@ class Synthesizer {
 				continue;
 			}
 
-
 			for (var pi = 0; pi < clause.production.length; ++pi) {
-
-				var prod = clause.production[pi];
-
-				var [geospaces, colorspaces] = this.applyTransform(prod.transformations, geospace, colorspace);			
-				// if shape: 
-				{
-					for (var mi = 0; mi < geospaces.length; ++mi) {
-						shapes.push({ shape: 42, geospace: geospaces[mi], colorspace: colorspaces[mi] });
-					}
-				} 
-				// else if call
-				{
-					for (var mi = 0; mi < geospaces.length; ++mi) {
-						var next = "";
-						stack.push({ rule: prod.next, depth: depth + 1, geospace: geospaces[mi], colorspace: colorspaces[mi] });
-					}
-				}
-
-			}		
+				this.synthProduction(clause.production[pi], depth + 1, geospace, colorspace, stack, shapes);
+			}
 		}
 
-		console.debug("Generated %d shapes.", shapes.length);
-		return shapes;
-	}	
+		console.debug("Generated %d shapes.", shapes.length);		
+	}
+
+	private synthProduction(prod: InvocStatement, 
+						depth: number, 
+						geospace: Float32Array, 
+						colorspace: Float32Array, 
+						stack: collections.Stack<SynthFrame>, 
+						shapes: ShapeInstance[]) : void {
+
+		var [childGeospaces, childColorspaces] = this.applyTransform(prod.transformations, geospace, colorspace);
+
+		console.assert(childGeospaces.length == childColorspaces.length);
+
+		switch (prod.next.type) {
+			case "shape":
+				for (var mi = 0; mi < childGeospaces.length; ++mi) {
+					shapes.push({ shape: prod.next.name, geospace: childGeospaces[mi], colorspace: childColorspaces[mi] });
+				}
+				break;
+			case "call":
+				for (var mi = 0; mi < childGeospaces.length; ++mi) {
+					stack.push({ rule: prod.next.name, depth, geospace: childGeospaces[mi], colorspace: childColorspaces[mi] });
+				}
+				break;
+		}
+	}
 
 	private applyTransform(transform: any, geospace: Float32Array, colorspace: Float32Array): [Float32Array[], Float32Array[]] {
 		// TODO : account for multipliers and chain of transformations
 		return [[], []];
 	}
 
-	ast: Statement[];
+	ast: ASTNode[];
 	maxObjects: number;
 	maxDepth: number;
 	index: collections.Dictionary<string, [number, DefStatement[]]>;

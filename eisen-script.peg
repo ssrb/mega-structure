@@ -114,8 +114,16 @@ RuleName "name"
     }
 
 RuleInvoc "invocation"
-    = transformations:Transformation* _? next:(RuleName / Primitive) {
+    = transformations:Transformation* _? next:Next {
         return {type: "invoc", transformations, next}
+    }
+
+Next
+    = name:RuleName {
+        return {type: "call", name}
+    }
+    / name:Shape {
+        return {type: "shape", name}
     }
 
 Transformation "transformation"
@@ -234,7 +242,7 @@ Blend "blend"
 // set color random
 // set colorpool [scheme]
 
-Primitive "drawing primitive"
+Shape "shape"
     = "box" / "grid" / "sphere" / "line" / "point" / "triangle" / "mesh" / "cylinder" / "tube"
 
 SetStatement "set statement"
@@ -305,4 +313,4 @@ _ "whitespace"
     = [ \t\n\r]+
     
 Reserved "reserved"
-    = "x" / "y" / "z" / "rx" / "ry" / "rz" / "s" / "fx" / "fy" / "fz" / "m" / "h" / "hue" / "sat" / "b" / "brightness" / "a" / "alpha" / "color" / "blend" / "rule" / "md" / "maxdepth" / "w" / "weight" / "set" / "maxdepth" / "maxobjects" / "minsize" /  "maxsize" / "seed" / "initial" / Primitive
+    = "x" / "y" / "z" / "rx" / "ry" / "rz" / "s" / "fx" / "fy" / "fz" / "m" / "h" / "hue" / "sat" / "b" / "brightness" / "a" / "alpha" / "color" / "blend" / "rule" / "md" / "maxdepth" / "w" / "weight" / "set" / "maxdepth" / "maxobjects" / "minsize" /  "maxsize" / "seed" / "initial" / Shape
