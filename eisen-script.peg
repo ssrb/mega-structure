@@ -25,13 +25,13 @@
 // of the authors and should not be interpreted as representing official policies,
 // either expressed or implied, of the FreeBSD Project.
 {
-	function extractOptional(optional, index) {
-    	return optional ? optional[index] : null;
-  	}
+    function extractOptional(optional, index) {
+        return optional ? optional[index] : null;
+    }
   
-	function optionalList(value) {
-		return value !== null ? value : [];
-  	}
+    function optionalList(value) {
+        return value !== null ? value : [];
+    }
     
     function buildList(head, tail, index) {
       return [head].concat(extractList(tail, index));
@@ -48,201 +48,261 @@
     }
 }
 
-Start = Statements
+Start = StatementSeq
 
-Statements "statements"
-	=  _? head:Statement tail:(_ Statement)*  _? {
-    	return buildList(head, tail, 1);
+StatementSeq "statements"
+    =  _? head:Statement tail:(_ Statement)*  _? {
+        return buildList(head, tail, 1);
     }
 
 Statement "statement"
-	=  SetStatement / TopLevelRuleInvoc / RuleDef
+    =  SetStatement / RuleInvoc / RuleDef
 
-RuleDef "rule definition" 
-	= "rule" _ name:RuleName modifiers:(_ RuleModifier)* _? "{" 
-    		_? production:(head:RuleInvoc tail:(_ RuleInvoc)* {return buildList(head, tail, 1);})? _? 
-       "}" {
-    	return {name, modifiers: extractList(modifiers, 1), production}
+RuleDef "definition" 
+    = "rule" _ rule:RuleName attributes:(_ RuleAttributes)* _? "{" _? production:RuleInvocSeq? _? "}" {
+    
+        var weight = 1;
+        var failover = null;
+        var maxdepth = -1;
+        
+        var attributes = extractList(attributes, 1);
+        for (var i = 0; i < attributes.length; ++i) {
+            var attribute = attributes[i];
+            switch (attribute.type) {
+                case "md":
+                    maxdepth = attribute.maxdepth;  
+                    failover = attribute.failover;
+                    break;
+                case "weight":
+                    weight = attribute.weight;
+                    break;
+            }
+        }
+    
+        return {type: "def", rule, weight, failover, maxdepth, production}
     }
     
-RuleModifier "rule modifier"
-	= MMaxdepth / MWeight
-
-RuleName "rule name"
-	= !(Reserved _) identifier:Identifier {
-    	return identifier
+RuleInvocSeq "production"
+    = head:RuleInvoc tail:(_ RuleInvoc)* {
+        return buildList(head, tail, 1);
     }
     
-TopLevelRuleInvoc
-	= RuleInvoc
+RuleAttributes "attributes"
+    = MaxDepthAttribute / WeightAttribute
+
+MaxDepthAttribute "maxdepth modifier"
+    = ("md" / "maxdepth") _ maxdepth:UnsignedIntegerLitteral _? failover:Failover? {
+        return {type: "md", maxdepth, failover};
+    }
+
+Failover "failover"
+    = ">" _? rule:RuleName {
+        return rule;
+    }
     
-RuleInvoc "rule invocation"
-	= transformations:(multiplier:Multiplier? "{" _? sequence:(head:Trans tail:(_ Trans)* {return buildList(head, tail, 1);})? _?"}" { return {multiplier, sequence}; })* _? next:(RuleName / Primitive) {
-    	return {transformations, next}
+WeightAttribute "weight modifier"
+    = "w" _ weight:Float {
+        return {type: "weight" , weight};
+    }
+    / "weight" _ weight:Float {
+        return {type: "weight", weight};
+    }
+    
+RuleName "name"
+    = !(Reserved _) identifier:Identifier {
+        return identifier
+    }
+
+RuleInvoc "invocation"
+    = transformations:Transformation* _? next:(RuleName / Primitive) {
+        return {type: "invoc", transformations, next}
+    }
+
+Transformation "transformation"
+    = multiplier:Multiplier? "{" _? sequence:ElementaryTransformationSeq? _? "}" { 
+        return {multiplier: multiplier ? multiplier : 1, sequence}; 
     }
 
 Multiplier "multiplier"
-	= Integer _? "*" _?
+    = UnsignedIntegerLitteral _? "*" _?
     
-Trans "transformation"
-	= Tx / Ty / Tz / Rx / Ry / Rz / Scale / Fx / Fy / Fz / Matrix / Hue / Sat / Bright / Alpha / SetColor / Blend
+ElementaryTransformationSeq  
+    = head:ElementaryTransformation tail:(_ ElementaryTransformation)* {
+        return buildList(head, tail, 1);
+    }
+    
+ElementaryTransformation
+    = Tx / Ty / Tz / Rx / Ry / Rz / Scale / Fx / Fy / Fz / Matrix / Hue / Sat / Bright / Alpha / SetColor / Blend
     
 // 3D-space transforms
 
 Tx "translate x"
-	= "x" _ dx:Float {
-    	return {x: dx}
+    = "x" _ dx:Float {
+        return {x: dx}
     }
     
 Ty "translate y"
-	= "y" _ dy:Float {
-    	return {y: dy}
+    = "y" _ dy:Float {
+        return {y: dy}
     }
     
 Tz "translate z"
-	= "z" _ dz:Float {
-    	return {z: dz}
+    = "z" _ dz:Float {
+        return {z: dz}
     }
     
 Rx "rotate x"
-	= "rx" _ theta:Float {
-    	return {rx: theta}
+    = "rx" _ theta:Float {
+        return {rx: theta}
     }
     
 Ry "rotate y"
-	= "ry" _ theta:Float {
-    	return {ry: theta}
+    = "ry" _ theta:Float {
+        return {ry: theta}
     }
     
 Rz "rotate z"
-	= "rz" _ theta:Float {
-    	return {rz: theta}
+    = "rz" _ theta:Float {
+        return {rz: theta}
     }
 
 Scale "scale"
-	= "s" _ Float (_ Float _ Float)?
+    = "s" _ x:Float yz:(_ Float _ Float)? {
+        return {s: yz ? [x, yz[1], yz[3]] : [x, x, x]}
+    }
     
 Fx "flip x"
-	= "fx" {
-    	return {fx}
+    = "fx" {
+        return {fx}
     }
 
 Fy "flip y"
-	= "fy" {
-    	return {fy}
+    = "fy" {
+        return {fy}
     }
     
 Fz "flip z"
-	= "fz" {
-    	return {fz}
+    = "fz" {
+        return {fz}
     }
 
 Matrix "matrix"
-	= "m" _ Float _ Float _ Float _ Float _ Float _ Float _ Float _ Float _ Float
+    = "m" _ Float _ Float _ Float _ Float _ Float _ Float _ Float _ Float _ Float
     
 // Colorspace transforms
 
 Hue "hue"
-	= "h" _ hue:Float {
-    	return {hue};
+    = "h" _ hue:Float {
+        return {hue};
     }
     / "hue" _ hue:Float {
-    	return {hue};
+        return {hue};
     }
     
 Sat "saturation"
-	= "sat" _ sat:Float {
-    	return {sat};
+    = "sat" _ sat:Float {
+        return {sat};
     }
     
 Bright "brightness"
- 	= "b" _ brightness:Float {
-    	return {brightness};
+    = "b" _ brightness:Float {
+        return {brightness};
     }
-    / "brightness" _ Float  {
-    	return {brightness};
+    / "brightness" _ brightness:Float  {
+        return {brightness};
     }
  
 Alpha "alpha"
- 	= ("a" _ Float) / ("alpha" _ Float)
+    = "a" _ alpha:Float {
+        return {alpha}
+    }
+    / "alpha" _ alpha:Float {
+        return {alpha}
+    }
  
 SetColor "set color"
-	= "color" _ Color
+    = "color" _ color:Color {
+        return {color}
+    }
 
 Blend "blend"
-	= "blend" _ Float _ Float
+    = "blend" a:_ Float b:_ Float {
+        return {blend: [a, b]}
+    }
 
 // TODO
 // set color random
 // set colorpool [scheme]
 
-MMaxdepth "maxdepth modifier"
-	= ("md" / "maxdepth") _ Integer (_? ">" _? RuleName)?
-
-MWeight "weight modifier"
-	= ("w" _ Float) / ("weight" _ Float) 
-
 Primitive "drawing primitive"
-	= "box" / "grid" / "sphere" / "line" / "point" / "triangle" / "mesh" / "cylinder" / "tube"
+    = "box" / "grid" / "sphere" / "line" / "point" / "triangle" / "mesh" / "cylinder" / "tube"
 
 SetStatement "set statement"
-	= "set" _ (Maxdepth / MaxObjects / Minsize / Naxsize / Seed / Background)
+    = "set" _ what:(Maxdepth / MaxObjects / Minsize / Naxsize / Seed / Background) {
+        return {type: "set", val: what}
+    }
 
 Maxdepth "maxdepth action"
-	= "maxdepth" _ Integer
+    = "maxdepth" _ Integer
     
 MaxObjects"maxobjects action"
-	= "maxobjects" _ Integer
+    = "maxobjects" _ Integer
 
 Minsize "minsize action"
-	= "minsize" _ Float
+    = "minsize" _ Float
 
 Naxsize "maxsize action"
-	=  "maxsize" _ Float
+    =  "maxsize" _ Float
     
 Seed "seed action"
-	= "seed" _ (Integer / "initial")
+    = "seed" _ (Integer / "initial")
 
 Background "background action"
-	= "background" _ Color
+    = "background" _ Color
 
 DecimalDigit
-	= [0-9]
+    = [0-9]
 
 NonZeroDigit
-	= [1-9]
+    = [1-9]
 
 HexDigit "hex digit"
-	= [0-9a-f]i
+    = [0-9a-f]i
     
 Character "character"
-	= [a-z]i
+    = [a-z]i
 
+UnsignedIntegerLitteral
+    = int:UnsignedInteger {
+        return parseInt(int);
+    }
+    
 UnsignedInteger "integer"
-	= "0" / NonZeroDigit DecimalDigit*
+    = "0" / NonZeroDigit DecimalDigit*
     
 Integer
-	= [+-]? UnsignedInteger
+    = [+-]? UnsignedInteger
 
 ExponentPart
-	= ExponentIndicator Integer
+    = ExponentIndicator Integer
 
 ExponentIndicator
-	= "e"i
+    = "e"i
   
+// Litteral
 Float "float"
-	= (Integer "." DecimalDigit* ExponentPart? / "." DecimalDigit+ ExponentPart? / Integer ExponentPart?) {
+    = (Integer "." DecimalDigit* ExponentPart? / "." DecimalDigit+ ExponentPart? / Integer ExponentPart?) {
        return parseFloat(text());
     }
 
 Color "color"
-	= "#" HexDigit HexDigit HexDigit (HexDigit HexDigit HexDigit)?
+    = "#" HexDigit HexDigit HexDigit (HexDigit HexDigit HexDigit)?
     
 Identifier "identifier"
-	= head:("_" / Character) tail:("_" / Character / DecimalDigit)* { return head + tail.join("") }
+    = head:("_" / Character) tail:("_" / Character / DecimalDigit)* { return head + tail.join("") }
 
 _ "whitespace"
-	= [ \t\n\r]+
+    = [ \t\n\r]+
     
 Reserved "reserved"
-	= "x" / "y" / "z" / "rx" / "ry" / "rz" / "s" / "fx" / "fy" / "fz" / "m" / "h" / "hue" / "sat" / "b" / "brightness" / "a" / "alpha" / "color" / "blend" / "rule" / "md" / "maxdepth" / "w" / "weight" / "set" / "maxdepth" / "maxobjects" / "minsize" /  "maxsize" / "seed" / "initial" / Primitive
+    = "x" / "y" / "z" / "rx" / "ry" / "rz" / "s" / "fx" / "fy" / "fz" / "m" / "h" / "hue" / "sat" / "b" / "brightness" / "a" / "alpha" / "color" / "blend" / "rule" / "md" / "maxdepth" / "w" / "weight" / "set" / "maxdepth" / "maxobjects" / "minsize" /  "maxsize" / "seed" / "initial" / Primitive
