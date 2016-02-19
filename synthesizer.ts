@@ -238,22 +238,17 @@ class Synthesizer {
 		var stack = new collections.Stack<[number, Float32Array, Float32Array]>();
 		stack.push([0, geospace, colorspace]);
 		while (!stack.isEmpty()) {
-
 			var [ti, childGeospace, childColorSpace] = stack.pop();
-			var trans = transforms[ti];
-			
-			for (var repeat = 0; repeat < trans.multiplier; ++repeat) {
-				
-				var [childGeospace, childColorSpace] = this.transformOne(transforms[ti].sequence, childGeospace, childColorSpace);
-
-				if (ti == transforms.length) {
-					childGeospaces.push(childGeospace);
-					childColorspaces.push(childColorSpace);
-				} else {
+			if (ti < transforms.length) {
+				var trans = transforms[ti];
+				for (var repeat = 0; repeat < trans.multiplier; ++repeat) {
+					var [childGeospace, childColorSpace] = this.transformOne(transforms[ti].sequence, childGeospace, childColorSpace);
 					stack.push([ti + 1, childGeospace, childColorSpace]);
 				}
-			}
-
+			} else {
+				childGeospaces.push(childGeospace);
+				childColorspaces.push(childColorSpace);
+			} 			
 		};
 
 		return [childGeospaces, childColorspaces];
