@@ -48,9 +48,9 @@
     }
 }
 
-Start = StatementSeq
+Start = StatementSeq?
 
-StatementSeq "statements"
+StatementSeq
     =  _? head:Statement tail:(_ Statement)*  _? {
         return buildList(head, tail, 1);
     }
@@ -59,7 +59,7 @@ Statement "statement"
     =  SetStatement / RuleInvoc / RuleDef
 
 RuleDef "definition" 
-    = "rule" _ rule:RuleName attributes:(_ RuleAttributes)* _? "{" _? production:RuleInvocSeq? _? "}" {
+    = RuleToken _ rule:RuleName attributes:(_ RuleAttributes)* _? "{" _? production:RuleInvocSeq? _? "}" {
     
         var weight = 1;
         var failover = null;
@@ -91,7 +91,7 @@ RuleAttributes "attributes"
     = MaxDepthAttribute / WeightAttribute
 
 MaxDepthAttribute "maxdepth modifier"
-    = ("md" / "maxdepth") _ maxdepth:UnsignedIntegerLitteral _? failover:Failover? {
+    = MaxDepthToken _ maxdepth:UnsignedIntegerLitteral _? failover:Failover? {
         return {type: "md", maxdepth, failover};
     }
 
@@ -101,15 +101,12 @@ Failover "failover"
     }
     
 WeightAttribute "weight modifier"
-    = "w" _ weight:Float {
+    = WeightToken _ weight:Float {
         return {type: "weight" , weight};
-    }
-    / "weight" _ weight:Float {
-        return {type: "weight", weight};
     }
     
 RuleName "name"
-    = !(Reserved _) identifier:Identifier {
+    = !Reserved identifier:Identifier {
         return identifier
     }
 
@@ -118,15 +115,15 @@ RuleInvoc "invocation"
         return {type: "invoc", transformations, next}
     }
 
-Next = name:Shape {
-        return {type: "shape", name}
-    }
-    / name:RuleName {
+Next = name:RuleName {
         return {type: "call", name}
+    }
+    / name:Shape {
+        return {type: "shape", name}
     }
 
 Transformation "transformation"
-    = multiplier:Multiplier? "{" _? sequence:ElementaryTransformationSeq? _? "}" { 
+    = multiplier:Multiplier? "{" _? sequence:ElementaryTransformationSeq _? "}" { 
         return {multiplier: multiplier ? multiplier : 1, sequence}; 
     }
 
@@ -144,98 +141,88 @@ ElementaryTransformation
 // 3D-space transforms
 
 Tx "translate x"
-    = "x" _ dx:Float {
+    = TxToken _ dx:ArithExpression {
         return {type: "trans", t: [dx, 0, 0]}
     }
     
 Ty "translate y"
-    = "y" _ dy:Float {
+    = TyToken _ dy:ArithExpression {
         return {type: "trans", t: [0, dy, 0]}
     }
     
 Tz "translate z"
-    = "z" _ dz:Float {
+    = TzToken _ dz:ArithExpression {
         return {type: "trans", t: [0, 0, dz]}
     }
     
 Rx "rotate x"
-    = "rx" _ theta:Float {
+    = RxToken _ theta:ArithExpression {
         return {type: "rot", axis: 0, theta}
     }
     
 Ry "rotate y"
-    = "ry" _ theta:Float {
+    = RyToken _ theta:ArithExpression {
         return {type: "rot", axis: 1, theta}
     }
     
 Rz "rotate z"
-    = "rz" _ theta:Float {
+    = RzToken _ theta:ArithExpression {
         return {type: "rot", axis: 2, theta}
     }
 
 Scale "scale"
-    = "s" _ x:Float yz:(_ Float _ Float)? {
+    = ScaleToken _ x:ArithExpression yz:(_ ArithExpression _ ArithExpression)? {
         return {type: "scale", s: yz ? [x, yz[1], yz[3]] : [x, x, x]};
     }
     
 Fx "flip x"
-    = "fx" {
-          return {type: "flip", s: yz ? [x, yz[1], yz[3]] : [x, x, x]};
+    = FxToken {
+          return {type: "scale", s: [-1, 1, 1]};
     }
 
 Fy "flip y"
-    = "fy" {
-        return {type: "flip", s: yz ? [x, yz[1], yz[3]] : [x, x, x]};
+    = FyToken {
+        return {type: "scale", s: [1, -1, 1]};
     }
     
 Fz "flip z"
-    = "fz" {
-        return {type: "flip", s: yz ? [x, yz[1], yz[3]] : [x, x, x]};
+    = FzToken {
+        return {type: "scale", s: [1, 1, -1]};
     }
 
 Matrix "matrix"
-    = "m" m:(_ Float)[9] {
+    = MatrixToken m:(_ ArithExpression)[9] {
         return {type: "matrix", m: extractList(m, 1)};
     }
     
 // Colorspace transforms
-
 Hue "hue"
-    = "h" _ hue:Float {
+    = HueToken _ hue:ArithExpression {
         return {hue};
-    }
-    / "hue" _ hue:Float {
-        return {hue};
-    }
-    
+    }   
+   
 Sat "saturation"
-    = "sat" _ sat:Float {
+    = SatToken _ sat:ArithExpression {
         return {sat};
     }
-    
+        
 Bright "brightness"
-    = "b" _ brightness:Float {
+    = BrightnessToken _ brightness:ArithExpression {
         return {brightness};
-    }
-    / "brightness" _ brightness:Float  {
-        return {brightness};
-    }
+    }   
  
 Alpha "alpha"
-    = "a" _ alpha:Float {
-        return {alpha}
-    }
-    / "alpha" _ alpha:Float {
+    = AlphaToken _ alpha:ArithExpression {
         return {alpha}
     }
  
 SetColor "set color"
-    = "color" _ color:Color {
+    =  ColorToken _ color:Color {
         return {color}
     }
 
 Blend "blend"
-    = "blend" a:_ Float b:_ Float {
+    = BlendToken _ a:ArithExpression _ b:ArithExpression {
         return {blend: [a, b]}
     }
 
@@ -247,27 +234,27 @@ Shape "shape"
     = "box" / "grid" / "sphere" / "line" / "point" / "triangle" / "mesh" / "cylinder" / "tube"
 
 SetStatement "set statement"
-    = "set" _ what:(Maxdepth / MaxObjects / Minsize / Naxsize / Seed / Background) {
+    = SetToken _ what:(Maxdepth / MaxObjects / Minsize / Naxsize / Seed / Background) {
         return {type: "set", val: what}
     }
 
-Maxdepth "maxdepth action"
-    = "maxdepth" _ Integer
+Maxdepth "maxdepth"
+    = MaxDepthToken _ Integer
     
-MaxObjects"maxobjects action"
-    = "maxobjects" _ Integer
+MaxObjects "maxobjects"
+    = MaxObjectsToken _ Integer
 
-Minsize "minsize action"
-    = "minsize" _ Float
+Minsize "minsize"
+    = MinSizeToken _ Float
 
-Naxsize "maxsize action"
-    =  "maxsize" _ Float
+Naxsize "maxsize"
+    =  MaxSizeToken _ Float
     
-Seed "seed action"
-    = "seed" _ (Integer / "initial")
+Seed "seed"
+    = SeedToken _ (Integer / "initial")
 
-Background "background action"
-    = "background" _ Color
+Background "background"
+    = BackgroundToken _ Color
 
 DecimalDigit
     = [0-9]
@@ -298,7 +285,7 @@ ExponentPart
 ExponentIndicator
     = "e"i
   
-// Litteral
+// Litterals
 Float "float"
     = (Integer "." DecimalDigit* ExponentPart? / "." DecimalDigit+ ExponentPart? / Integer ExponentPart?) {
        return parseFloat(text());
@@ -307,11 +294,101 @@ Float "float"
 Color "color"
     = "#" HexDigit HexDigit HexDigit (HexDigit HexDigit HexDigit)?
     
-Identifier "identifier"
-    = head:("_" / Character) tail:("_" / Character / DecimalDigit)* { return head + tail.join("") }
+// Simple arithmetic
+ArithExpression "arithmetic expression"
+  = head:ArithTerm tail:(_? ("+" / "-") _? ArithTerm)* {
+      var result = head, i;
 
-_ "whitespace"
-    = [ \t\n\r]+
+      for (i = 0; i < tail.length; i++) {
+        if (tail[i][1] === "+") { result += tail[i][3]; }
+        if (tail[i][1] === "-") { result -= tail[i][3]; }
+      }
+
+      return result;
+    }
+
+ArithTerm
+  = head:ArithFactor tail:(_? ("*" / "/") _? ArithFactor)* {
+      var result = head, i;
+
+      for (i = 0; i < tail.length; i++) {
+        if (tail[i][1] === "*") { result *= tail[i][3]; }
+        if (tail[i][1] === "/") { result /= tail[i][3]; }
+      }
+
+      return result;
+    }
+
+ArithFactor
+  = "(" _? expr:ArithExpression _? ")" { return expr; }
+  / Float    
     
+Identifier "identifier"
+    = head:IdentifierStart tail:IdentifierPart* { return head + tail.join("") }
+
+IdentifierStart
+    = "_" / Character
+
+IdentifierPart
+    = IdentifierStart / DecimalDigit
+
+_
+    = [ \t\n\r]+
+
+SetToken = "set" !IdentifierPart
+RuleToken = "rule" !IdentifierPart
+MaxDepthToken = "md" !IdentifierPart / "maxdepth" !IdentifierPart
+WeightToken = "w" !IdentifierPart / "weight" !IdentifierPart
+MaxObjectsToken = "maxobjects" !IdentifierPart
+MinSizeToken = "minsize" !IdentifierPart
+MaxSizeToken = "maxsize" !IdentifierPart
+SeedToken = "seed" !IdentifierPart
+BackgroundToken = "background" !IdentifierPart
+HueToken =  "h" !IdentifierPart / "hue" !IdentifierPart 
+SatToken = "sat" !IdentifierPart
+BrightnessToken = "b" !IdentifierPart / "brightness" !IdentifierPart
+AlphaToken = "a" !IdentifierPart / "alpha" !IdentifierPart
+ColorToken = "color" !IdentifierPart
+BlendToken = "blend" !IdentifierPart
+InitialToken = "initial" !IdentifierPart
+TxToken = "x" !IdentifierPart
+TyToken = "y" !IdentifierPart
+TzToken = "z" !IdentifierPart
+RxToken = "rx" !IdentifierPart
+RyToken = "ry" !IdentifierPart
+RzToken = "rz" !IdentifierPart
+ScaleToken = "s" !IdentifierPart
+FxToken = "fx" !IdentifierPart
+FyToken = "fy" !IdentifierPart
+FzToken = "fz" !IdentifierPart
+MatrixToken = "m" !IdentifierPart
+
 Reserved "reserved"
-    = "x" / "y" / "z" / "rx" / "ry" / "rz" / "s" / "fx" / "fy" / "fz" / "m" / "h" / "hue" / "sat" / "b" / "brightness" / "a" / "alpha" / "color" / "blend" / "rule" / "md" / "maxdepth" / "w" / "weight" / "set" / "maxdepth" / "maxobjects" / "minsize" /  "maxsize" / "seed" / "initial" / Shape
+    = SetToken
+    / RuleToken
+    / MaxDepthToken
+    / WeightToken
+    / MaxObjectsToken
+    / MinSizeToken
+    / MaxSizeToken
+    / SeedToken
+    / BackgroundToken
+    / HueToken
+    / SatToken
+    / BrightnessToken
+    / AlphaToken
+    / ColorToken
+    / BlendToken
+    / InitialToken
+    / TxToken
+    / TyToken
+    / TzToken
+    / RxToken
+    / RyToken
+    / RzToken
+    / ScaleToken
+    / FxToken
+    / FyToken
+    / FzToken
+    / MatrixToken
+    / Shape !IdentifierPart
