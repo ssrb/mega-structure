@@ -89,6 +89,10 @@ interface ScaleNode extends ASTNode {
 	s: number[];
 }
 
+interface MatrixNode extends ASTNode {
+	m: number[];
+}
+
 interface SynthFrame {
 	rule: string;
 	depth: number;
@@ -283,6 +287,16 @@ class Synthesizer {
 				case "scale":
 					var scale = <ScaleNode>sequence[si];
 					glmat.mat4.scale(childGeospace, childGeospace, scale.s);
+					break;
+				case "matrix":
+					var matrix = <MatrixNode>sequence[si];
+
+					var m = [matrix.m[0], matrix.m[1], matrix.m[2], 0, 
+							matrix.m[3], matrix.m[4], matrix.m[5], 0,
+							matrix.m[6], matrix.m[7], matrix.m[8], 0,
+							0, 0, 0, 1];
+
+					glmat.mat4.multiply(childGeospace, childGeospace, m);
 					break;
 				// TODO colorspace			
 			}

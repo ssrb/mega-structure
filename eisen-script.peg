@@ -118,12 +118,11 @@ RuleInvoc "invocation"
         return {type: "invoc", transformations, next}
     }
 
-Next
-    = name:RuleName {
-        return {type: "call", name}
-    }
-    / name:Shape {
+Next = name:Shape {
         return {type: "shape", name}
+    }
+    / name:RuleName {
+        return {type: "call", name}
     }
 
 Transformation "transformation"
@@ -176,26 +175,28 @@ Rz "rotate z"
 
 Scale "scale"
     = "s" _ x:Float yz:(_ Float _ Float)? {
-        return {type: "scale", s: yz ? [x, yz[1], yz[3]] : [x, x, x]}
+        return {type: "scale", s: yz ? [x, yz[1], yz[3]] : [x, x, x]};
     }
     
 Fx "flip x"
     = "fx" {
-          return {type: "scale", s: [-1, 1, 1]}
+          return {type: "flip", s: yz ? [x, yz[1], yz[3]] : [x, x, x]};
     }
 
 Fy "flip y"
     = "fy" {
-        return {type: "scale", s: [1, -1, 1]}
+        return {type: "flip", s: yz ? [x, yz[1], yz[3]] : [x, x, x]};
     }
     
 Fz "flip z"
     = "fz" {
-       return {type: "scale", s: [1, 1, -1]}
+        return {type: "flip", s: yz ? [x, yz[1], yz[3]] : [x, x, x]};
     }
 
 Matrix "matrix"
-    = "m" _ Float _ Float _ Float _ Float _ Float _ Float _ Float _ Float _ Float
+    = "m" m:(_ Float)[9] {
+        return {type: "matrix", m: extractList(m, 1)};
+    }
     
 // Colorspace transforms
 
