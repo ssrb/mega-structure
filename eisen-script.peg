@@ -88,11 +88,11 @@ RuleInvocSeq "production"
     }
     
 RuleAttributes "attributes"
-    = MaxDepthAttribute / WeightAttribute
+    =  MaxDepthAttribute / WeightAttribute
 
-MaxDepthAttribute "maxdepth modifier"
-    = MaxDepthToken _ maxdepth:UnsignedIntegerLitteral _? failover:Failover? {
-        return {type: "md", maxdepth, failover};
+MaxDepthAttribute "maxdepth"
+    = MaxDepthToken _ maxdepth:UnsignedIntegerLitteral failover:(_? Failover)? {
+        return {type: "md", maxdepth, failover: failover ? failover[1] : null};
     }
 
 Failover "failover"
@@ -123,8 +123,8 @@ Next = name:RuleName {
     }
 
 Transformation "transformation"
-    = multiplier:Multiplier? "{" _? sequence:ElementaryTransformationSeq _? "}" { 
-        return {multiplier: multiplier ? multiplier : 1, sequence}; 
+    = multiplier:Multiplier? "{" _? sequence:ElementaryTransformationSeq? _? "}" { 
+        return {multiplier: multiplier ? multiplier : 1, sequence: sequence ? sequence : []}; 
     }
 
 Multiplier "multiplier"
@@ -195,7 +195,7 @@ Matrix "matrix"
         return {type: "matrix", m: extractList(m, 1)};
     }
     
-// Colorspace transforms
+// // TODO Colorspace transforms
 Hue "hue"
     = HueToken _ hue:ArithExpression {
         return {hue};
@@ -234,7 +234,7 @@ Shape "shape"
     = "box" / "grid" / "sphere" / "line" / "point" / "triangle" / "mesh" / "cylinder" / "tube"
 
 SetStatement "set statement"
-    = SetToken _ what:(Maxdepth / MaxObjects / Minsize / Naxsize / Seed / Background) {
+    = SetToken _ what:(Maxdepth / MaxObjects / Minsize / Naxsize / Seed / Background / Raytracer) {
         return {type: "set", val: what}
     }
 
@@ -255,6 +255,10 @@ Seed "seed"
 
 Background "background"
     = BackgroundToken _ Color
+
+// For structure-synth compat
+Raytracer "raytracer"
+    = RaytracerToken (!LineTerminator SourceCharacter)*
 
 DecimalDigit
     = [0-9]
@@ -291,8 +295,12 @@ Float "float"
        return parseFloat(text());
     }
 
+// TODO
 Color "color"
-    = "#" HexDigit HexDigit HexDigit (HexDigit HexDigit HexDigit)?
+    = ("#" HexDigit HexDigit HexDigit (HexDigit HexDigit HexDigit)?
+    / "white" / "black" / "red" / "green" / "blue") {
+        return {r: 0, g: 0, b: 0};
+    }
     
 // Simple arithmetic
 ArithExpression "arithmetic expression"
@@ -332,9 +340,26 @@ IdentifierStart
 IdentifierPart
     = IdentifierStart / DecimalDigit
 
-_
-    = [ \t\n\r]+
+SourceCharacter = .
 
+WhiteSpace "whitespace" = "\t" / "\v" / "\f" / " "
+
+LineTerminator = [\n\r]
+
+LineTerminatorSequence "end of line" = "\n" / "\r\n" / "\r"
+
+Comment "comment"
+  = MultiLineComment
+  / SingleLineComment
+
+MultiLineComment
+  = "/*" (!"*/" SourceCharacter)* "*/"
+
+SingleLineComment
+  = "//" (!LineTerminator SourceCharacter)*
+_
+  = (WhiteSpace / LineTerminatorSequence / Comment)+
+  
 SetToken = "set" !IdentifierPart
 RuleToken = "rule" !IdentifierPart
 MaxDepthToken = "md" !IdentifierPart / "maxdepth" !IdentifierPart
@@ -362,6 +387,7 @@ FxToken = "fx" !IdentifierPart
 FyToken = "fy" !IdentifierPart
 FzToken = "fz" !IdentifierPart
 MatrixToken = "m" !IdentifierPart
+RaytracerToken = "raytracer" !IdentifierPart
 
 Reserved "reserved"
     = SetToken
@@ -391,4 +417,5 @@ Reserved "reserved"
     / FyToken
     / FzToken
     / MatrixToken
+    / RaytracerToken
     / Shape !IdentifierPart
