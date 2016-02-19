@@ -146,52 +146,52 @@ ElementaryTransformation
 
 Tx "translate x"
     = "x" _ dx:Float {
-        return {x: dx}
+        return {type: "trans", t: [dx, 0, 0]}
     }
     
 Ty "translate y"
     = "y" _ dy:Float {
-        return {y: dy}
+        return {type: "trans", t: [0, dy, 0]}
     }
     
 Tz "translate z"
     = "z" _ dz:Float {
-        return {z: dz}
+        return {type: "trans", t: [0, 0, dz]}
     }
     
 Rx "rotate x"
     = "rx" _ theta:Float {
-        return {rx: theta}
+        return {type: "rot", axis: 0, theta}
     }
     
 Ry "rotate y"
     = "ry" _ theta:Float {
-        return {ry: theta}
+        return {type: "rot", axis: 1, theta}
     }
     
 Rz "rotate z"
     = "rz" _ theta:Float {
-        return {rz: theta}
+        return {type: "rot", axis: 2, theta}
     }
 
 Scale "scale"
     = "s" _ x:Float yz:(_ Float _ Float)? {
-        return {s: yz ? [x, yz[1], yz[3]] : [x, x, x]}
+        return {type: "scale", s: yz ? [x, yz[1], yz[3]] : [x, x, x]}
     }
     
 Fx "flip x"
     = "fx" {
-        return {fx}
+          return {type: "scale", s: [-1, 1, 1]}
     }
 
 Fy "flip y"
     = "fy" {
-        return {fy}
+        return {type: "scale", s: [1, -1, 1]}
     }
     
 Fz "flip z"
     = "fz" {
-        return {fz}
+       return {type: "scale", s: [1, 1, -1]}
     }
 
 Matrix "matrix"

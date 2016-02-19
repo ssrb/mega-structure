@@ -44,6 +44,8 @@ window.onload = () => {
 	scriptreq.send();
 }
 
+enum Axis { X, Y, Z };
+
 interface ASTNode {
 	type: string;
 }
@@ -71,7 +73,20 @@ interface NextNode extends ASTNode {
 
 interface Transformation {
 	multiplier: number;
-	sequence: any[];
+	sequence: ASTNode[];
+}
+
+interface TransNode extends ASTNode {
+	t: number[];
+}
+
+interface RotNode extends ASTNode {
+	axis: Axis;
+	theta: number;
+}
+
+interface ScaleNode extends ASTNode {
+	s: number[];
 }
 
 interface SynthFrame {
@@ -244,8 +259,41 @@ class Synthesizer {
 		return [childGeospaces, childColorspaces];
 	}
 
-	private transformOne(sequence: any, geospace: Float32Array, colorspace: Float32Array): [Float32Array, Float32Array] {
-		return [glmat.mat4.create(), glmat.mat4.create()];
+	private transformOne(sequence: ASTNode[], geospace: Float32Array, colorspace: Float32Array): [Float32Array, Float32Array] {
+
+		var childGeospace = new Float32Array(geospace);
+		var childColorspace = new Float32Array(colorspace);
+
+		for (var si = 0; si < sequence.length; ++si) {
+			switch (sequence[si].type) {
+				case "trans":
+					var trans = <TransNode>sequence[si];
+					glmat.mat4.translate(childGeospace, childGeospace, trans.t);
+					break;
+				case "rot":
+					var rot = <RotNode>sequence[si];
+					var thetaRad = rot.theta * Math.PI / 180
+					switch (rot.axis) {
+						case Axis.X:
+							glmat.mat4.rotateX(childGeospace, childGeospace, thetaRad);
+							break;
+						case Axis.Y:
+							glmat.mat4.rotateY(childGeospace, childGeospace, thetaRad);
+							break;
+						case Axis.Z:
+							glmat.mat4.rotateZ(childGeospace, childGeospace, thetaRad);
+							break;
+					}
+					break;
+				case "scale":
+					var scale = <ScaleNode>sequence[si];
+					glmat.mat4.scale(childGeospace, childGeospace, scale.s);
+					break;
+				// TODO colorspace			
+			}
+		}
+
+		return [childGeospace, childColorspace];
 	}
 
 	ast: ASTNode[];
