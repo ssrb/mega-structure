@@ -92,7 +92,7 @@ RuleAttributes "attributes"
 
 MaxDepthAttribute "maxdepth"
     = MaxDepthToken _ maxdepth:UnsignedIntegerLitteral failover:(_? Failover)? {
-        return {type: "md", maxdepth, failover: failover ? failover[1] : null};
+        return {type: "md", maxdepth, failover: extractOptional(failover, 1)};
     }
 
 Failover "failover"
@@ -124,7 +124,7 @@ Next = name:RuleName {
 
 Transformation "transformation"
     = multiplier:Multiplier? "{" _? sequence:ElementaryTransformationSeq? _? "}" { 
-        return {multiplier: multiplier ? multiplier : 1, sequence: sequence ? sequence : []}; 
+        return {multiplier: multiplier ? multiplier : 1, sequence: optionalList(sequence)}; 
     }
 
 Multiplier "multiplier"
