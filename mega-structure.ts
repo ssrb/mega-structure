@@ -29,7 +29,10 @@
 ///<reference path="typings/gl-matrix/gl-matrix.d.ts"/>
 var glmat = require('./bower_components/gl-matrix/dist/gl-matrix-min.js');
 
-debugger;
+import ShapeInstance = require('./structure');
+import StructureArtist = require('./structure-artist');
+
+// debugger;
 
 window.onload = () => {
 
@@ -52,8 +55,11 @@ window.onload = () => {
     scriptreq.open('GET', './examples/menger.es');
     scriptreq.onload = function() {
 
+		var structure: ShapeInstance[] = null;
+
 		var myWorker = new Worker("synthesizer-webworker.js");
 		myWorker.onmessage = function(e) {
+			structure = e.data;
 			// myWorker.terminate();
 		}
 		myWorker.postMessage(scriptreq.responseText);

@@ -31,6 +31,7 @@ var eisenscript = require('./eisen-script');
 ///<reference path="typings/gl-matrix/gl-matrix.d.ts"/>
 var glmat = require('./bower_components/gl-matrix/dist/gl-matrix-min.js');
 
+import ShapeInstance = require('./structure');
 import collections = require('./node_modules/typescript-collections/collections');
 
 enum Axis { X, Y, Z };
@@ -85,12 +86,6 @@ interface MatrixNode extends ASTNode {
 interface SynthFrame {
 	rule: string;
 	depth: number;
-	geospace: Float32Array;
-	colorspace: Float32Array;
-}
-
-interface ShapeInstance {
-	shape: any;
 	geospace: Float32Array;
 	colorspace: Float32Array;
 }
@@ -164,7 +159,7 @@ class Synthesizer {
 		while (!stack.isEmpty()) {
 
 			if (shapes.length >= this.maxObjects) {
-				console.debug("max objects reached");
+				console.log("max objects reached");
 				break;
 			}
 
@@ -195,7 +190,7 @@ class Synthesizer {
 			}
 		}
 
-		console.debug("Generated %d shapes.", shapes.length);		
+		console.log("Generated %d shapes.", shapes.length);		
 	}
 
 	private synthProduction(prod: InvocStatement, 

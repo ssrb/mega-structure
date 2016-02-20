@@ -25,7 +25,9 @@
 // of the authors and should not be interpreted as representing official policies,
 // either expressed or implied, of the FreeBSD Project.
 
-class StructureArtist {
-
+interface ShapeInstance {
+	shape: string;
+	geospace: Float32Array;
+	colorspace: Float32Array;
 }
-export = StructureArtist;
+export = ShapeInstance;
