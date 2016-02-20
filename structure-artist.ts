@@ -25,7 +25,15 @@
 // of the authors and should not be interpreted as representing official policies,
 // either expressed or implied, of the FreeBSD Project.
 
+import ShapeInstance = require('./structure');
+
 class StructureArtist {
+	constructor(structure: ShapeInstance[]) {	
+	}
+
+	public draw() : void {
+		// TODO: draw a simple cube
+	}
 
 }
 export = StructureArtist;
