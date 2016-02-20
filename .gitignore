@@ -1,5 +1,6 @@
 bundle.js
 eisen-script.js
+synthesizer-webworker.js
 node_modules
 bower_components
 typings

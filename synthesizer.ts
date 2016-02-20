@@ -33,17 +33,6 @@ var glmat = require('./bower_components/gl-matrix/dist/gl-matrix-min.js');
 
 import collections = require('./node_modules/typescript-collections/collections');
 
-// Temporary, used to test the parser without any ui
-window.onload = () => {
-    var scriptreq = new XMLHttpRequest();
-    scriptreq.open('GET', './examples/mondrian_nc.es');
-    scriptreq.onload = function() {
-		var synth = new Synthesizer(scriptreq.responseText);
-		synth.synthesize()
-	}
-	scriptreq.send();
-}
-
 enum Axis { X, Y, Z };
 
 interface ASTNode {
@@ -310,3 +299,4 @@ class Synthesizer {
 	maxDepth: number;
 	index: collections.Dictionary<string, [number, DefStatement[]]>;
 }
+export = Synthesizer;

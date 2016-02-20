@@ -55,10 +55,9 @@ gulp.task('.peg', function() {
     .pipe( gulp.dest('.') )
 });
 
-gulp.task('.mega-structure', function() {
+gulp.task('.ui', function() {
     var bundler = browserify({debug: true})
-        .add('./synthesizer.ts')
-        .add('./node_modules/typescript-collections/collections.ts')
+        .add('./mega-structure.ts')
         .plugin(tsify)
         .transform(browserifyShader)
     
@@ -67,12 +66,24 @@ gulp.task('.mega-structure', function() {
         .pipe(gulp.dest('.'));
 });
 
+gulp.task('.synth', function() {
+    var bundler = browserify({debug: true})
+        .add('./synthesizer-webworker.ts')
+        .add('./node_modules/typescript-collections/collections.ts')
+        .plugin(tsify)
+        .transform(browserifyShader)
+    
+    return bundler.bundle()
+        .pipe(source('synthesizer-webworker.js'))
+        .pipe(gulp.dest('.'));
+});
 
 gulp.task('default', function(callback) {
     runSequence('.bower.install',
                 '.tsd.install',
                 '.peg',
-                '.mega-structure',
+                '.ui',
+                '.synth',
                 callback);
 });
 

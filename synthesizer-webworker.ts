@@ -24,3 +24,18 @@
 // The views and conclusions contained in the software and documentation are those
 // of the authors and should not be interpreted as representing official policies,
 // either expressed or implied, of the FreeBSD Project.
+
+import Synthesizer = require('./synthesizer');
+
+onmessage = function(e) {
+
+	console.log('Synthesizing !');
+
+	var synth = new Synthesizer(e.data);
+	var structure = synth.synthesize();
+
+	console.log('Done. Posting result.');
+
+	this.postMessage(structure);
+}
+

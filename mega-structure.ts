@@ -24,3 +24,63 @@
 // The views and conclusions contained in the software and documentation are those
 // of the authors and should not be interpreted as representing official policies,
 // either expressed or implied, of the FreeBSD Project.
+
+///<reference path="typings/browserify/browserify.d.ts"/>
+///<reference path="typings/gl-matrix/gl-matrix.d.ts"/>
+var glmat = require('./bower_components/gl-matrix/dist/gl-matrix-min.js');
+
+debugger;
+
+window.onload = () => {
+
+	var canvas = <HTMLCanvasElement>document.createElement("canvas");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    document.body.appendChild(canvas);
+
+    var gl = <WebGLRenderingContext>canvas.getContext("webgl", {});
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LEQUAL);
+    gl.clearDepth(1.0);
+    gl.enable(gl.BLEND);
+    gl.blendEquation(gl.FUNC_ADD);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.enable(gl.BLEND);
+    gl.clearColor(0, 0, 0, 1);
+
+    var scriptreq = new XMLHttpRequest();
+    scriptreq.open('GET', './examples/menger.es');
+    scriptreq.onload = function() {
+
+		var myWorker = new Worker("synthesizer-webworker.js");
+		myWorker.onmessage = function(e) {
+			// myWorker.terminate();
+		}
+		myWorker.postMessage(scriptreq.responseText);
+
+		var lastTime = new Date().getTime();
+
+		function animate() {
+
+			var timeNow = new Date().getTime();
+
+			var width = window.innerWidth - 50;
+			var height = window.innerHeight - 10;
+
+			gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
+			
+			// TODO
+
+			gl.flush();
+
+			lastTime = timeNow;
+
+			requestAnimationFrame(animate);
+		}
+
+		animate();
+
+	}
+
+	scriptreq.send();
+}
