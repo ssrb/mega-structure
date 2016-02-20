@@ -92,7 +92,7 @@ interface SynthFrame {
 
 class Synthesizer {
 
-	constructor(script : string) {
+	public constructor(script : string) {
 		// TODO: seed RNG ?
 		this.ast = <ASTNode[]>eisenscript.parse(script);
 		this.index = Synthesizer.indexRules(this.ast);
@@ -289,9 +289,9 @@ class Synthesizer {
 		return [childGeospace, childColorspace];
 	}
 
-	ast: ASTNode[];
-	maxObjects: number;
-	maxDepth: number;
-	index: collections.Dictionary<string, [number, DefStatement[]]>;
+	private ast: ASTNode[];
+	private maxObjects: number;
+	private maxDepth: number;
+	private index: collections.Dictionary<string, [number, DefStatement[]]>;
 }
 export = Synthesizer;

@@ -28,12 +28,13 @@
 import ShapeInstance = require('./structure');
 
 class StructureArtist {
-	constructor(structure: ShapeInstance[]) {	
+	public constructor(gl: WebGLRenderingContext, structure: ShapeInstance[]) {
+		this.gl = gl;	
 	}
 
 	public draw() : void {
 		// TODO: draw a simple cube
 	}
-
+	private gl: WebGLRenderingContext;
 }
 export = StructureArtist;

@@ -58,7 +58,7 @@ window.onload = () => {
 
 		var myWorker = new Worker("synthesizer-webworker.js");
 		myWorker.onmessage = function(e) {
-			artist = new StructureArtist(e.data);
+			artist = new StructureArtist(gl, e.data);
 			// myWorker.terminate();
 		}
 		myWorker.postMessage(scriptreq.responseText);
@@ -75,7 +75,7 @@ window.onload = () => {
 			gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
 			
 			if (artist) {
-
+				artist.draw();
 			}
 
 			gl.flush();
