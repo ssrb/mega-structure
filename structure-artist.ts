@@ -25,16 +25,99 @@
 // of the authors and should not be interpreted as representing official policies,
 // either expressed or implied, of the FreeBSD Project.
 
+///<reference path="typings/browserify/browserify.d.ts"/>
+
 import ShapeInstance = require('./structure');
 
 class StructureArtist {
 	public constructor(gl: WebGLRenderingContext, structure: ShapeInstance[]) {
-		this.gl = gl;	
+		this.gl = gl;
+		this.init();
 	}
 
-	public draw() : void {
-		// TODO: draw a simple cube
+	private init() {
+        var gl = this.gl;
+
+        // gl.getExtension('OES_standard_derivatives');
+
+        // Browserify will bundle shaders and js all together for us.
+        // In order to do so, the tool must find a 'require' with a string literal argument
+        // to figure out what must be bundled together
+        require('./shaders/structure.vs');
+        require('./shaders/structure.fs');
+        
+        this.structureProgram = gl.createProgram();
+        gl.attachShader(this.structureProgram, StructureArtist.getShader(gl, './shaders/structure.vs'));
+        gl.attachShader(this.structureProgram, StructureArtist.getShader(gl, './shaders/structure.fs'));
+        gl.linkProgram(this.structureProgram);
+    }
+
+	public draw(prMatrix: Float32Array, mvMatrix: Float32Array): void {
+		
+		var vertices = [0, 0, 0,
+        				0, 0, 1,
+        				0, 1, 0,
+        				0, 1, 1,
+        				1, 0, 0,
+        				1, 0, 1,
+        				1, 1, 0,
+        				1, 1, 1];
+
+        var triangles = [	0, 1, 2, 1, 2, 3,
+							4, 5, 6, 5, 6, 7,
+							0, 1, 4, 1, 4, 5,
+							2, 3, 6, 3, 6, 7,
+							0, 2, 4, 2, 4, 6,
+							1, 3, 5, 3, 5, 7];
+     
+		var gl = this.gl;
+       
+        gl.useProgram(this.structureProgram);
+
+        var location = gl.getAttribLocation(this.structureProgram, 'aPos')
+        gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+        gl.vertexAttribPointer(location, 3, gl.FLOAT, false, 0, 0);
+        gl.enableVertexAttribArray(location);
+
+        // var solLocation = gl.getAttribLocation(this.structureProgram, "aCol");
+        // gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+        // gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(sol), gl.STATIC_DRAW);
+        // gl.vertexAttribPointer(solLocation, 1, gl.FLOAT, false, 0, 0);
+        // gl.enableVertexAttribArray(solLocation);
+
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, gl.createBuffer());
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(triangles), gl.STATIC_DRAW);
+
+        gl.uniformMatrix4fv(gl.getUniformLocation(this.structureProgram, 'prMatrix'), false, prMatrix);
+        gl.uniformMatrix4fv(gl.getUniformLocation(this.structureProgram, 'mvMatrix'), false, mvMatrix);
+       
+        gl.drawElements(gl.TRIANGLES, triangles.length, gl.UNSIGNED_SHORT, 0);      
 	}
+
+	private static getShader(gl : WebGLRenderingContext, path : string) : WebGLShader {
+
+        var shader: WebGLShader;
+
+        var ext = path.substring(path.lastIndexOf(".") + 1);
+
+        if (ext == 'fs')
+            shader = gl.createShader(gl.FRAGMENT_SHADER);
+        else if (ext == 'vs')
+            shader = gl.createShader(gl.VERTEX_SHADER);
+        else return null;
+
+        var glsl = require(path);
+
+        gl.shaderSource(shader, glsl());
+        gl.compileShader(shader);
+        if (gl.getShaderParameter(shader, gl.COMPILE_STATUS) == 0)
+            alert(path + "\n" + gl.getShaderInfoLog(shader));
+
+        return shader;
+    }
+
 	private gl: WebGLRenderingContext;
+ 	private structureProgram: WebGLProgram;
 }
 export = StructureArtist;

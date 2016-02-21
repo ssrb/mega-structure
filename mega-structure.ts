@@ -41,15 +41,9 @@ window.onload = () => {
     document.body.appendChild(canvas);
 
     var gl = <WebGLRenderingContext>canvas.getContext("webgl", {});
-    gl.enable(gl.DEPTH_TEST);
-    gl.depthFunc(gl.LEQUAL);
-    gl.clearDepth(1.0);
-    gl.enable(gl.BLEND);
-    gl.blendEquation(gl.FUNC_ADD);
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-    gl.enable(gl.BLEND);
     gl.clearColor(0, 0, 0, 1);
-
+    gl.enable(gl.DEPTH_TEST);
+    
     var scriptreq = new XMLHttpRequest();
     scriptreq.open('GET', './examples/menger.es');
     scriptreq.onload = function() {
@@ -64,18 +58,33 @@ window.onload = () => {
 		myWorker.postMessage(scriptreq.responseText);
 
 		var lastTime = new Date().getTime();
+		
+		var theta = 0;
 
 		function animate() {
 
 			var timeNow = new Date().getTime();
 
-			var width = window.innerWidth - 50;
-			var height = window.innerHeight - 10;
+			var width = window.innerWidth;
+			var height = window.innerHeight;
 
-			gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
+			gl.viewport(0, 0, width, height);
+			gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 			
 			if (artist) {
-				artist.draw();
+
+				var prMatrix = <Float32Array>glmat.mat4.create();
+				glmat.mat4.perspective(prMatrix, 45, width / height, 0.1, 100.0);
+
+				var mvMatrix = <Float32Array>glmat.mat4.create();  
+                glmat.mat4.translate(mvMatrix, mvMatrix, [0.0, 0.0, -8]);
+
+				// "Turntable"
+                var dt = (timeNow - lastTime) / (60 * 1000);
+                theta += 2 * Math.PI * 5 * dt
+				glmat.mat4.rotate(mvMatrix, mvMatrix, theta, [1, 1, 1]);
+
+				artist.draw(prMatrix, mvMatrix);
 			}
 
 			gl.flush();
