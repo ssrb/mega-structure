@@ -45,7 +45,7 @@ window.onload = () => {
     gl.enable(gl.DEPTH_TEST);
     
     var scriptreq = new XMLHttpRequest();
-    scriptreq.open('GET', './examples/menger.es');
+    scriptreq.open('GET', './examples/city.es');
     scriptreq.onload = function() {
 
 		var artist: StructureArtist = null;

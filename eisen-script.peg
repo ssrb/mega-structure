@@ -79,7 +79,7 @@ RuleDef "definition"
             }
         }
     
-        return {type: "def", rule, weight, failover, maxdepth, production}
+        return {type: "def", rule, weight, failover, maxdepth, production: optionalList(production)}
     }
     
 RuleInvocSeq "production"
@@ -298,7 +298,7 @@ Float "float"
 // TODO
 Color "color"
     = ("#" HexDigit HexDigit HexDigit (HexDigit HexDigit HexDigit)?
-    / "white" / "black" / "red" / "green" / "blue") {
+    / "white" / "black" / "red" / "green" / "blue" / "grey") {
         return {r: 0, g: 0, b: 0};
     }
     
