@@ -147,6 +147,8 @@ class Synthesizer {
 			}
 		}
 		
+		console.log("Generated %d shapes.", shapes.length);		
+		
 		return shapes;
 	}
 
@@ -189,8 +191,6 @@ class Synthesizer {
 				this.synthProduction(clause.production[pi], depth + 1, geospace, colorspace, stack, shapes);
 			}
 		}
-
-		console.log("Generated %d shapes.", shapes.length);		
 	}
 
 	private synthProduction(prod: InvocStatement, 
