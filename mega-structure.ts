@@ -77,7 +77,7 @@ window.onload = () => {
 				glmat.mat4.perspective(prMatrix, 45, width / height, 0.1, 100.0);
 
 				var mvMatrix = <Float32Array>glmat.mat4.create();  
-                glmat.mat4.translate(mvMatrix, mvMatrix, [0.0, 0.0, -8]);
+                glmat.mat4.translate(mvMatrix, mvMatrix, [0.0, 0.0, -2]);
 
 				// "Turntable"
                 var dt = (timeNow - lastTime) / (60 * 1000);
