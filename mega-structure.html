@@ -1,19 +1,88 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" ng-app="MegaStructure.App">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
     <title>mega-structure</title>
+
+	<!-- Bootstrap CSS layout -->
+	<link href="bower_components/bootstrap/dist/css/bootstrap.css" rel="stylesheet" />
+
+    <!-- Angular -->
+	<link rel="stylesheet" type="text/css" href="bower_components/codemirror/lib/codemirror.css">
+	<script type="text/javascript" src="bower_components/codemirror/lib/codemirror.js"></script>
+	<script type="text/javascript" src="bower_components/angular/angular.min.js"></script>
+	<script type="text/javascript" src="bower_components/angular-ui-codemirror/ui-codemirror.js"></script>
+	<script type="text/javascript" src="bower_components/angular-bootstrap/ui-bootstrap-tpls.min.js"></script>
+
+	<style>
+		.title {
+			font-family: Consolas,monospace;
+			font-size: x-small;
+			background: white;
+			border: 0px;
+		}
+
+		.CodeMirror {
+		  border: 1px solid gray;
+		}
+	</style>
+
 </head>
+
 <body>
- <pre>  
-                                      _                   _                  
+
+ <pre id="header" class="title">                                      _                   _                  
  _ __ ___   ___  __ _  __ _       ___| |_ _ __ _   _  ___| |_ _   _ _ __ ___ 
 | '_ ` _ \ / _ \/ _` |/ _` |_____/ __| __| '__| | | |/ __| __| | | | '__/ _ \
 | | | | | |  __/ (_| | (_| |_____\__ \ |_| |  | |_| | (__| |_| |_| | | |  __/
 |_| |_| |_|\___|\__, |\__,_|     |___/\__|_|   \__,_|\___|\__|\__,_|_|  \___| beta
-                |___/ 
-(c) 2016 SSRB
+(c) 2016 SSRB   |___/ 
 </pre>
+
 <script src="bundle.js"></script>
+
+<div class="container-fluid">
+  <div class="row-fluid">
+    <div class="col-lg-6">
+      	<section ng-controller="CodemirrorCtrl">
+			<ui-codemirror ui-codemirror-opts="editorOptions">R1
+
+rule R1 maxdepth 3 > c2 {
+		{ s 1/ 3 x - 1 y - 1 } R1
+		{ s 1/ 3 x - 1 y - 1  z - 1 } R1
+		{ s 1/ 3 x - 1 y - 1  z + 1 } R1
+		{ s 1/ 3 x 1 y - 1 } R1
+		{ s 1/ 3 x 1 y - 1  z - 1 } R1
+		{ s 1/ 3 x 1 y - 1  z + 1 } R1
+		{ s 1/ 3  y - 1  z - 1 } R1
+		{ s 1/ 3  y - 1  z + 1 } R1
+		{ s 1/ 3 x - 1 y 1  } R1
+		{ s 1/ 3 x - 1 y 1  z - 1 } R1
+		{ s 1/ 3 x - 1 y 1  z + 1 } R1
+		{ s 1/ 3 x 1 y 1  } R1
+		{ s 1/ 3 x 1 y 1  z - 1 } R1
+		{ s 1/ 3 x 1 y 1  z + 1 } R1
+		{ s 1/ 3  y 1  z - 1 } R1
+		{ s 1/ 3  y 1  z + 1 } R1
+		{ s 1/ 3 x - 1   z - 1 } R1
+		{ s 1/ 3 x - 1   z + 1 } R1
+		{ s 1/ 3 x 1    z - 1 } R1
+		{ s 1/ 3 x 1    z + 1 } R1
+	}
+
+rule c2 {
+	box
+}</ui-codemirror>
+		</section>
+    </div>
+    <div class="col-lg-6">
+    	<canvas id="structure"></canvas>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

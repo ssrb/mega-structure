@@ -16,6 +16,12 @@
     },
     "gl-matrix/gl-matrix.d.ts": {
       "commit": "85af69c91599a6c904618545f0613970e1ff3f64"
+    },
+    "angularjs/angular.d.ts": {
+      "commit": "32345ecb1a86750733eea0ea16356963ec4a2f61"
+    },
+    "jquery/jquery.d.ts": {
+      "commit": "32345ecb1a86750733eea0ea16356963ec4a2f61"
     }
   }
 }

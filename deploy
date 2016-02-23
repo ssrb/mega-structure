@@ -5,6 +5,7 @@ cd _site
 cp ../mega-structure.html .
 cp ../bundle.js ../synthesizer-webworker.js .
 cp -r ../examples .
+cp -r ../bower_components .
 git init
 git config --global user.email "sb@unhexhexium.net"
 git config --global user.name "ssrb (via Travis CI)"

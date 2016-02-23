@@ -25,20 +25,42 @@
 // of the authors and should not be interpreted as representing official policies,
 // either expressed or implied, of the FreeBSD Project.
 
+/// <reference path="typings/angularjs/angular.d.ts"/>
+
 ///<reference path="typings/browserify/browserify.d.ts"/>
 ///<reference path="typings/gl-matrix/gl-matrix.d.ts"/>
 var glmat = require('./bower_components/gl-matrix/dist/gl-matrix-min.js');
 
 import StructureArtist = require('./structure-artist');
 
-// debugger;
+debugger;
+
+var app: ng.IModule = angular.module('MegaStructure.App', ['ui.codemirror']);
+
+app.controller('CodemirrorCtrl', ['$scope', function($scope) {
+    $scope.editorOptions = {
+        lineNumbers: true,       
+        mode: 'eisen-script',
+    };
+}]);
+
+function doLayout() : void {
+	var canvas = <HTMLCanvasElement>document.getElementById("structure");
+	canvas.width = canvas.parentElement.offsetWidth;
+	canvas.height = window.innerHeight - document.getElementById("header").offsetHeight;
+
+	var scale = 0.95;
+	canvas.width *= scale;
+	canvas.height *= scale;
+}
+
+window.onresize = doLayout;
 
 window.onload = () => {
 
-	var canvas = <HTMLCanvasElement>document.createElement("canvas");
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    document.body.appendChild(canvas);
+	var canvas = <HTMLCanvasElement>document.getElementById("structure");
+
+	doLayout();
 
     var gl = <WebGLRenderingContext>canvas.getContext("webgl", {});
     gl.clearColor(0, 0, 0, 1);
@@ -65,8 +87,8 @@ window.onload = () => {
 
 			var timeNow = new Date().getTime();
 
-			var width = window.innerWidth;
-			var height = window.innerHeight;
+			var width = canvas.width;
+			var height = canvas.height;
 
 			gl.viewport(0, 0, width, height);
 			gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
