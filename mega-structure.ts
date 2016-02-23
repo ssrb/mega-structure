@@ -25,99 +25,41 @@
 // of the authors and should not be interpreted as representing official policies,
 // either expressed or implied, of the FreeBSD Project.
 
-/// <reference path="typings/angularjs/angular.d.ts"/>
+///<reference path="typings/angularjs/angular.d.ts"/>
 ///<reference path="typings/browserify/browserify.d.ts"/>
 ///<reference path="typings/gl-matrix/gl-matrix.d.ts"/>
 var glmat = require('./bower_components/gl-matrix/dist/gl-matrix-min.js');
 
 import StructureArtist = require('./structure-artist');
+import EisenScripts = require('./examples-generated');
 
 debugger;
 
-// Hack until I work on the GL viewport
-var structure = null;
+var artist: StructureArtist = null;
 
 var app: ng.IModule = angular.module('MegaStructure.App', ['ui.codemirror']);
 
-app.controller('CodemirrorCtrl', ['$scope', function($scope) {
-
-	$scope.scripts = {};
-	$scope.scripts['City'] =
-		"{color white} r1\n" +
-		"{x 0 y 0 z -0.05 s 5 5 0.1 color grey}box\n" +
-		"//rule 1, fills the square\n" +
-		"\n" +
-		"rule r1 md 4{\n" +
-		"	{ x -0.25 y 0.25 s 0.5 0.5 0.75 rz 180} r1\n" +
-		"	{ x 0.25 y -0.25 s 0.5 0.5 1 rz 0} r1\n" +
-		"	{ x -0.25 y -0.25 s 0.5 0.5 1 rz 90} r1\n" +
-		"	tower}\n" +
-		"\n" +
-		"rule r1 md 5 {\n" +
-		"	{ x -0.25 y 0.25 s 0.5 0.5 1 rz 0} r1\n" +
-		"	{ x 0.25 y -0.25 s 0.5 0.5 0.75 rz 90} r1\n" +
-		"	{ x -0.25 y -0.25 s 0.5 0.5 1 rz 90} r1\n" +
-		"	tower}\n" +
-		"\n" +
-		"rule tower w 1{\n" +
-		"	{z 0.01 rz 3 s 0.8}tower\n" +
-		"	base}\n" +
-		"rule tower w 1{\n" +
-		"	{z 0.01 rz 3 s 1.01}tower\n" +
-		"	base}\n" +
-		"rule tower w 1{\n" +
-		"	{z 0.01 rz 3 s 1.02}tower\n" +
-		"	base}\n" +
-		"rule tower w 1{\n" +
-		"	{z 0.01 rz 3 s 0.95}tower\n" +
-		"	base}\n" +
-		"rule tower w 0.5{}\n" +
-		"\n" +
-		"rule base {\n" +
-		"	{x 0.25 y 0.25 s 0.45 0.45 0.01 sat 0.3}box}\n";
-
-	$scope.scripts['Menger'] =
-		"R1\n\n" +
-		"rule R1 maxdepth 3 > c2 {\n" +
-		"	{ s 1/3 x -1 y -1 } R1\n" +
-		"	{ s 1/3 x -1 y -1  z -1 } R1\n" +
-		"	{ s 1/3 x -1 y -1  z +1 } R1\n" +
-		"	{ s 1/3 x 1 y -1 } R1\n" +
-		"	{ s 1/3 x 1 y -1  z -1 } R1\n" +
-		"	{ s 1/3 x 1 y -1  z +1 } R1\n" +
-		"	{ s 1/3  y -1  z -1 } R1\n" +
-		"	{ s 1/3  y -1  z +1 } R1\n" +
-		"	{ s 1/3 x -1 y 1  } R1\n" +
-		"	{ s 1/3 x -1 y 1  z -1 } R1\n" +
-		"	{ s 1/3 x -1 y 1  z +1 } R1\n" +
-		"	{ s 1/3 x 1 y 1  } R1\n" +
-		"	{ s 1/3 x 1 y 1  z -1 } R1\n" +
-		"	{ s 1/3 x 1 y 1  z +1 } R1\n" +
-		"	{ s 1/3  y 1  z -1 } R1\n" +
-		"	{ s 1/3  y 1  z +1 } R1\n" +
-		"	{ s 1/3 x -1   z -1 } R1\n" +
-		"	{ s 1/3 x -1   z +1 } R1\n" +
-		"	{ s 1/3 x 1    z -1 } R1\n" +
-		"	{ s 1/3 x 1    z +1 } R1\n" +
-		"}\n\n" +
-		"rule c2 {\n" +
-		"	box\n" +
-		"}\n";
-
-	$scope.examples = Object.keys($scope.scripts);
+app.controller('CodemirrorCtrl', ['$scope', function($scope) {	
+	$scope.examples = Object.keys(EisenScripts);
 	$scope.example = $scope.examples[0];
-	$scope.cmModel = $scope.scripts[$scope.example];
+	$scope.exampleChanged = function() {
+		$scope.cmModel = EisenScripts[$scope.example];
+	}
+	$scope.exampleChanged();
+
 	$scope.cmOption = {
 		lineNumbers: true,
-		mode: 'eisen-script'
+		mode: 'eisen-script',
+		theme: 'twilight'
 	};
 
 	$scope.synthetize = function() {
 		var myWorker = new Worker("synthesizer-webworker.js");
 		myWorker.onmessage = function(e) {
 			$scope.structure = e.data;
-			// Hack until I work on the GL viewport
-			structure = e.data;
+			var canvas = <HTMLCanvasElement>document.getElementById("canvas");
+			var gl = <WebGLRenderingContext>canvas.getContext("webgl", {});
+			artist = new StructureArtist(gl, e.data);
 			myWorker.terminate();
 		}
 		myWorker.postMessage($scope.cmModel);
@@ -148,7 +90,6 @@ window.onload = () => {
     gl.clearColor(0, 0, 0, 1);
     gl.enable(gl.DEPTH_TEST);
     
-    var artist: StructureArtist = null;
 	var lastTime = new Date().getTime();
 	var theta = 0;
 	function animate() {
@@ -161,11 +102,6 @@ window.onload = () => {
 		gl.viewport(0, 0, width, height);
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 		
-		if (structure) {
-			artist = new StructureArtist(gl, structure);
-			structure = null;
-		}
-
 		if (artist) {
 
 			var prMatrix = <Float32Array>glmat.mat4.create();

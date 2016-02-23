@@ -1,7 +1,7 @@
 bundle.js
 eisen-script.js
 synthesizer-webworker.js
+examples-generated.ts
 node_modules
 bower_components
 typings
-

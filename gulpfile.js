@@ -55,11 +55,21 @@ gulp.task('.peg', function() {
     .pipe( gulp.dest('.') )
 });
 
+gulp.task('.examples', function(cb) {
+    var exec = require('child_process').exec;
+    exec('./pack-examples.sh > examples-generated.ts', function (err, stdout, stderr) {
+    console.log(stdout);
+    console.log(stderr);
+    cb(err);
+    });
+});
+
 gulp.task('.ui', function() {
     var bundler = browserify({debug: true})
         .add('./mega-structure.ts')
-        .plugin(tsify)
+        .plugin(tsify)    
         .transform(browserifyShader)
+        .transform('brfs')
     
     return bundler.bundle()
         .pipe(source('bundle.js'))
@@ -82,6 +92,7 @@ gulp.task('default', function(callback) {
     runSequence('.bower.install',
                 '.tsd.install',
                 '.peg',
+                '.examples',
                 '.ui',
                 '.synth',
                 callback);
