@@ -22,6 +22,9 @@
     },
     "jquery/jquery.d.ts": {
       "commit": "32345ecb1a86750733eea0ea16356963ec4a2f61"
+    },
+    "threejs/three.d.ts": {
+      "commit": "dade4414712ce84e3c63393f1aae407e9e7e6af7"
     }
   }
 }

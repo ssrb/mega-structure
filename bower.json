@@ -24,6 +24,7 @@
     "angular-ui-codemirror": "~0.3.0",
     "angular": "^1.5.0",
     "bootstrap": "^3.3.6",
-    "angular-bootstrap": "^1.1.2"
+    "angular-bootstrap": "^1.1.2",
+    "three.js": "^0.74.0"
   }
 }
