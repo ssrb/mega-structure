@@ -54,7 +54,7 @@ function CreateGeometry(structure: ShapeInstance[]): THREE.Geometry {
 	for (var si = 0; si < structure.length; ++si) {
 		for (var vi = 0; vi < 8; ++vi) {
 			var vert = [0, 0, 0, 0];
-			glmat.vec4.transformMat4(vert, [vertices[3 * vi], vertices[3 * vi + 1], vertices[3 * vi + 2], 1], structure[si].geospace);
+			glmat.vec4.transformMat4(vert, [vertices[3 * vi] - 0.5, vertices[3 * vi + 1] - 0.5, vertices[3 * vi + 2] - 0.5, 1], structure[si].geospace);
 			geometry.vertices.push(new THREE.Vector3(vert[0], vert[1], vert[2]));
 		}
 		var tris = [];
