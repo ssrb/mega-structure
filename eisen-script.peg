@@ -213,12 +213,12 @@ Bright "brightness"
  
 Alpha "alpha"
     = AlphaToken _ alpha:ArithExpression {
-        return {alpha}
+        return {alpha};
     }
  
 SetColor "set color"
     =  ColorToken _ color:Color {
-        return {color}
+        return color;
     }
 
 Blend "blend"
@@ -267,7 +267,7 @@ NonZeroDigit
     = [1-9]
 
 HexDigit "hex digit"
-    = [0-9a-f]i
+    = d:[0-9a-f]i
     
 Character "character"
     = [a-z]i
@@ -295,10 +295,23 @@ Float "float"
        return parseFloat(text());
     }
 
-// TODO
+
 Color "color"
-    = ("#" HexDigit HexDigit HexDigit (HexDigit HexDigit HexDigit)?
-    / "white" / "black" / "red" / "green" / "blue" / "grey") {
+    = "#" b1:(HexDigit HexDigit HexDigit) b2:(HexDigit HexDigit HexDigit)? {
+        if (b2) {
+            return {type: "color", 
+                    r: parseInt('0x' + b1[0] + b1[1]) / 255, 
+                    g: parseInt('0x' + b1[2] + b2[0]) / 255,
+                    b: parseInt('0x' + b2[1] + b2[2]) / 255};
+        } else {
+            return {type: "color", 
+                    r: parseInt('0x' + b1[0]) / 15, 
+                    g: parseInt('0x' + b1[1]) / 15,
+                    b: parseInt('0x' + b1[2]) / 15};
+        }
+    }
+ // TODO
+    / "white" / "black" / "red" / "green" / "blue" / "grey" {
         return {r: 0, g: 0, b: 0};
     }
     

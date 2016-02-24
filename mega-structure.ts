@@ -59,8 +59,10 @@ function CreateGeometry(structure: ShapeInstance[]): THREE.Geometry {
 		}
 		var tris = [];
 		for (var fi = 0; fi < 12; ++fi) {
+			var face = new THREE.Face3(triangles[3 * fi] + si * 8, triangles[3 * fi + 1] + si * 8, triangles[3 * fi + 2] + si * 8);
+			face.color = new THREE.Color(structure[si].colorspace[0], structure[si].colorspace[1], structure[si].colorspace[2]);
 			geometry.faces.push(
-				new THREE.Face3(triangles[3 * fi] + si * 8, triangles[3 * fi + 1] + si * 8, triangles[3 * fi + 2] + si * 8)
+				face
 			);
 		}
 	}
@@ -74,7 +76,7 @@ var app: ng.IModule = angular.module('MegaStructure.App', ['ui.codemirror']);
 
 app.controller('CodemirrorCtrl', ['$scope', function($scope) {	
 	$scope.examples = Object.keys(EisenScripts);
-	$scope.example = 'menger';
+	$scope.example = 'mondrian';
 	$scope.exampleChanged = function() {
 		$scope.cmModel = EisenScripts[$scope.example];
 	}
@@ -129,8 +131,7 @@ window.onload = () => {
 
 	var material =
 		new THREE.MeshPhongMaterial({
-			color: 0x156289,
-			emissive: 0x072534,
+			vertexColors: THREE.FaceColors,
 			side: THREE.DoubleSide,
 			shading: THREE.FlatShading
 		});
@@ -168,8 +169,6 @@ window.onload = () => {
 		var dt = (timeNow - lastTime) / (60 * 1000);
 		theta += 2 * Math.PI * 5 * dt
 		
-		
-
 		mesh.rotation.x = theta;
 		mesh.rotation.y = theta;
 

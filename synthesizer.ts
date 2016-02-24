@@ -32,6 +32,7 @@ var glmat = require('./bower_components/gl-matrix/dist/gl-matrix-min.js');
 import ShapeInstance = require('./structure');
 import collections = require('./node_modules/typescript-collections/collections');
 
+debugger;
 enum Axis { X, Y, Z };
 
 interface ASTNode {
@@ -81,11 +82,18 @@ interface MatrixNode extends ASTNode {
 	m: number[];
 }
 
+interface ColorNode extends ASTNode {
+	r: number;
+	g: number;
+	b: number;
+}
+
+
 interface SynthFrame {
 	rule: string;
 	depth: number;
 	geospace: Float32Array;
-	colorspace: Float32Array;
+	colorspace: number[];
 }
 
 class Synthesizer {
@@ -154,7 +162,7 @@ class Synthesizer {
 	
 		var stack = new collections.Stack<SynthFrame>();
 
-		this.synthProduction(prod, 0, glmat.mat4.create(), glmat.mat4.create(), stack, shapes);
+		this.synthProduction(prod, 0, glmat.mat4.create(), [1, 0, 0], stack, shapes);
 		
 		while (!stack.isEmpty()) {
 
@@ -194,7 +202,7 @@ class Synthesizer {
 	private synthProduction(prod: InvocStatement, 
 						depth: number, 
 						geospace: Float32Array, 
-						colorspace: Float32Array, 
+						colorspace: number[], 
 						stack: collections.Stack<SynthFrame>, 
 						shapes: ShapeInstance[]) : void {
 
@@ -216,12 +224,12 @@ class Synthesizer {
 		}
 	}
 
-	private transform(transforms: Transformation[], geospace: Float32Array, colorspace: Float32Array): [Float32Array[], Float32Array[]] {
+	private transform(transforms: Transformation[], geospace: Float32Array, colorspace: number[]): [Float32Array[], number[][]] {
 				
 		var childGeospaces = new Array<Float32Array>();
-		var childColorspaces = new Array<Float32Array>();
+		var childColorspaces = new Array<number[]>();
 
-		var stack = new collections.Stack<[number, Float32Array, Float32Array]>();
+		var stack = new collections.Stack<[number, Float32Array, number[]]>();
 		stack.push([0, geospace, colorspace]);
 		while (!stack.isEmpty()) {
 			var [ti, childGeospace, childColorSpace] = stack.pop();
@@ -240,10 +248,10 @@ class Synthesizer {
 		return [childGeospaces, childColorspaces];
 	}
 
-	private transformOne(sequence: ASTNode[], geospace: Float32Array, colorspace: Float32Array): [Float32Array, Float32Array] {
+	private transformOne(sequence: ASTNode[], geospace: Float32Array, colorspace: number[]): [Float32Array, number[]] {
 
 		var childGeospace = new Float32Array(geospace);
-		var childColorspace = new Float32Array(colorspace);
+		var childColorspace = colorspace.slice(0);
 
 		for (var si = 0; si < sequence.length; ++si) {
 			switch (sequence[si].type) {
@@ -279,6 +287,10 @@ class Synthesizer {
 							0, 0, 0, 1];
 
 					glmat.mat4.multiply(childGeospace, childGeospace, m);
+					break;
+				case "color":
+					var color = <ColorNode>sequence[si];
+					childColorspace = [color.r, color.g, color.b];
 					break;
 				// TODO colorspace			
 			}

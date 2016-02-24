@@ -28,6 +28,6 @@
 interface ShapeInstance {
 	shape: string;
 	geospace: Float32Array;
-	colorspace: Float32Array;
+	colorspace: number[];
 }
 export = ShapeInstance;
