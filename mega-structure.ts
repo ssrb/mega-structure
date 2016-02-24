@@ -27,13 +27,46 @@
 
 ///<reference path="typings/tsd.d.ts"/>
 var glmat = require('./bower_components/gl-matrix/dist/gl-matrix-min.js');
-
-import StructureArtist = require('./structure-artist');
 import EisenScripts = require('./examples-generated');
+import ShapeInstance = require('./structure');
 
-debugger;
+function CreateGeometry(structure: ShapeInstance[]): THREE.Geometry {
 
-// var artist: StructureArtist = null;
+	var geometry = new THREE.Geometry();
+
+	var triangles = [0, 1, 2, 1, 2, 3,
+		4, 5, 6, 5, 6, 7,
+		0, 1, 4, 1, 4, 5,
+		2, 3, 6, 3, 6, 7,
+		0, 2, 4, 2, 4, 6,
+		1, 3, 5, 3, 5, 7];
+
+	var vertices = [0, 0, 0,
+		0, 0, 1,
+		0, 1, 0,
+		0, 1, 1,
+		1, 0, 0,
+		1, 0, 1,
+		1, 1, 0,
+		1, 1, 1];
+
+	// TODO: do all that in the web worker and on the GPU !
+	for (var si = 0; si < structure.length; ++si) {
+		for (var vi = 0; vi < 8; ++vi) {
+			var vert = [0, 0, 0, 0];
+			glmat.vec4.transformMat4(vert, [vertices[3 * vi], vertices[3 * vi + 1], vertices[3 * vi + 2], 1], structure[si].geospace);
+			geometry.vertices.push(new THREE.Vector3(vert[0], vert[1], vert[2]));
+		}
+		var tris = [];
+		for (var fi = 0; fi < 12; ++fi) {
+			geometry.faces.push(
+				new THREE.Face3(triangles[3 * fi] + si * 8, triangles[3 * fi + 1] + si * 8, triangles[3 * fi + 2] + si * 8)
+			);
+		}
+	}
+
+	return geometry;
+}
 
 var mesh: THREE.Mesh;
 
@@ -57,7 +90,7 @@ app.controller('CodemirrorCtrl', ['$scope', function($scope) {
 		var myWorker = new Worker("synthesizer-webworker.js");
 		myWorker.onmessage = function(e) {
 			$scope.structure = e.data;
-			mesh.geometry = StructureArtist.CreateGeometry(e.data);	
+			mesh.geometry = CreateGeometry(e.data);	
 			myWorker.terminate();
 		}
 		myWorker.postMessage($scope.cmModel);
