@@ -20,7 +20,7 @@ rule Stair
 	700 * { ry 0.95 y 0.1 z 0.2 } Step
 }
 
-Rule Step
+rule Step
 {
 	{ s 1 0.025 0.1 } box
 	{ b 0.25 s 1.5 0.01 0.01 } box
