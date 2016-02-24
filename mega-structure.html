@@ -17,6 +17,8 @@
 	<script type="text/javascript" src="bower_components/angular-ui-codemirror/ui-codemirror.js"></script>
 	<script type="text/javascript" src="bower_components/angular-bootstrap/ui-bootstrap-tpls.min.js"></script>
 
+	<script type="text/javascript" src="bower_components/three.js/three.min.js"></script>
+
 	<style>
 		.title {
 			font-family: Consolas,monospace;
@@ -26,6 +28,7 @@
 		}
 
 		.CodeMirror {
+		  height: auto;
 		  border: 1px solid gray;
 		}
 	</style>
@@ -55,9 +58,7 @@
 	      	</form>				
 		</section>
     </div>
-    <div class="col-lg-6">
-    	<canvas id="canvas" ng-model="structure"></canvas>
-    </div>
+    <div class="col-lg-6" id="structure-view"></div>
   </div>
 </div>
 

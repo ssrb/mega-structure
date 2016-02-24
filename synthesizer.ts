@@ -25,10 +25,8 @@
 // of the authors and should not be interpreted as representing official policies,
 // either expressed or implied, of the FreeBSD Project.
 
-///<reference path="typings/browserify/browserify.d.ts"/>
-///<reference path="typings/pegjs/pegjs.d.ts"/>
+///<reference path="typings/tsd.d.ts"/>
 var eisenscript = require('./eisen-script');
-///<reference path="typings/gl-matrix/gl-matrix.d.ts"/>
 var glmat = require('./bower_components/gl-matrix/dist/gl-matrix-min.js');
 
 import ShapeInstance = require('./structure');

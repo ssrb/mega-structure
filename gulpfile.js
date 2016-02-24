@@ -2,7 +2,6 @@ var gulp = require('gulp');
 var source = require('vinyl-source-stream');
 var browserify = require('browserify');
 var watchify = require('watchify');
-var browserifyShader = require("browserify-shader")
 var tsify = require('tsify');
 var uglify = require('uglifyify');
 var tsd = require('gulp-tsd');
@@ -67,8 +66,7 @@ gulp.task('.examples', function(cb) {
 gulp.task('.ui', function() {
     var bundler = browserify({debug: true})
         .add('./mega-structure.ts')
-        .plugin(tsify)    
-        .transform(browserifyShader)
+        .plugin(tsify)
         .transform('brfs')
     
     return bundler.bundle()
@@ -81,7 +79,6 @@ gulp.task('.synth', function() {
         .add('./synthesizer-webworker.ts')
         .add('./node_modules/typescript-collections/collections.ts')
         .plugin(tsify)
-        .transform(browserifyShader)
     
     return bundler.bundle()
         .pipe(source('synthesizer-webworker.js'))

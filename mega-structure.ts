@@ -25,9 +25,7 @@
 // of the authors and should not be interpreted as representing official policies,
 // either expressed or implied, of the FreeBSD Project.
 
-///<reference path="typings/angularjs/angular.d.ts"/>
-///<reference path="typings/browserify/browserify.d.ts"/>
-///<reference path="typings/gl-matrix/gl-matrix.d.ts"/>
+///<reference path="typings/tsd.d.ts"/>
 var glmat = require('./bower_components/gl-matrix/dist/gl-matrix-min.js');
 
 import StructureArtist = require('./structure-artist');
@@ -35,13 +33,15 @@ import EisenScripts = require('./examples-generated');
 
 debugger;
 
-var artist: StructureArtist = null;
+// var artist: StructureArtist = null;
+
+var mesh: THREE.Mesh;
 
 var app: ng.IModule = angular.module('MegaStructure.App', ['ui.codemirror']);
 
 app.controller('CodemirrorCtrl', ['$scope', function($scope) {	
 	$scope.examples = Object.keys(EisenScripts);
-	$scope.example = $scope.examples[0];
+	$scope.example = 'menger';
 	$scope.exampleChanged = function() {
 		$scope.cmModel = EisenScripts[$scope.example];
 	}
@@ -57,9 +57,7 @@ app.controller('CodemirrorCtrl', ['$scope', function($scope) {
 		var myWorker = new Worker("synthesizer-webworker.js");
 		myWorker.onmessage = function(e) {
 			$scope.structure = e.data;
-			var canvas = <HTMLCanvasElement>document.getElementById("canvas");
-			var gl = <WebGLRenderingContext>canvas.getContext("webgl", {});
-			artist = new StructureArtist(gl, e.data);
+			mesh.geometry = StructureArtist.CreateGeometry(e.data);	
 			myWorker.terminate();
 		}
 		myWorker.postMessage($scope.cmModel);
@@ -71,58 +69,82 @@ app.controller('CodemirrorCtrl', ['$scope', function($scope) {
 
 window.onload = () => {
 
-	var canvas = <HTMLCanvasElement>document.getElementById("canvas");
+	var view = document.getElementById("structure-view");
 
-	function doLayout(): void {
-		canvas.width = canvas.parentElement.offsetWidth;
-		canvas.height = window.innerHeight - document.getElementById("header").offsetHeight;
+	var renderer = new THREE.WebGLRenderer({ antialias: true });
+	renderer.setPixelRatio(window.devicePixelRatio);
 
-		var scale = 0.95;
-		canvas.width *= scale;
-		canvas.height *= scale;
+	var camera = new THREE.PerspectiveCamera(75, 1, 0.1, 50);
+	camera.position.z = 3
+
+	function doResize(): void {
+		var w = view.offsetWidth, h = window.innerHeight - document.getElementById("header").offsetHeight;
+		w *= 0.95;
+		h *= 0.95;
+		renderer.setSize(w, h);
+		camera.aspect = w / h;
+		camera.updateProjectionMatrix();
 	}
+	doResize();
+	window.addEventListener('resize', doResize);
 
-	window.onresize = doLayout;
+	view.appendChild(renderer.domElement);
 
-	doLayout();
+	var scene = new THREE.Scene();
 
-    var gl = <WebGLRenderingContext>canvas.getContext("webgl", {});
-    gl.clearColor(0, 0, 0, 1);
-    gl.enable(gl.DEPTH_TEST);
-    
+	scene.add(camera);
+
+	var material =
+		new THREE.MeshPhongMaterial({
+			color: 0x156289,
+			emissive: 0x072534,
+			side: THREE.DoubleSide,
+			shading: THREE.FlatShading
+		});
+
+	mesh = new THREE.Mesh(
+			new THREE.BoxGeometry(1, 1, 1),
+			material
+		);
+
+	scene.add(mesh);
+
+	var ambientLight = new THREE.AmbientLight(0x000000);
+	scene.add(ambientLight);
+
+	var lights = [];
+	lights[0] = new THREE.PointLight(0xffffff, 1, 0);
+	lights[1] = new THREE.PointLight(0xffffff, 1, 0);
+	lights[2] = new THREE.PointLight(0xffffff, 1, 0);
+
+	lights[0].position.set(0, 200, 0);
+	lights[1].position.set(100, 200, 100);
+	lights[2].position.set(-100, -200, -100);
+
+	scene.add(lights[0]);
+	scene.add(lights[1]);
+	scene.add(lights[2]);
+	
 	var lastTime = new Date().getTime();
 	var theta = 0;
 	function animate() {
 
 		var timeNow = new Date().getTime();
 
-		var width = canvas.width;
-		var height = canvas.height;
-
-		gl.viewport(0, 0, width, height);
-		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+		// "Turntable"
+		var dt = (timeNow - lastTime) / (60 * 1000);
+		theta += 2 * Math.PI * 5 * dt
 		
-		if (artist) {
+		
 
-			var prMatrix = <Float32Array>glmat.mat4.create();
-			glmat.mat4.perspective(prMatrix, 45, width / height, 0.1, 100.0);
+		mesh.rotation.x = theta;
+		mesh.rotation.y = theta;
 
-			var mvMatrix = <Float32Array>glmat.mat4.create();  
-            glmat.mat4.translate(mvMatrix, mvMatrix, [0.0, 0.0, -2]);
-
-			// "Turntable"
-            var dt = (timeNow - lastTime) / (60 * 1000);
-            theta += 2 * Math.PI * 5 * dt
-			glmat.mat4.rotate(mvMatrix, mvMatrix, theta, [1, 1, 1]);
-
-			artist.draw(prMatrix, mvMatrix);
-		}
-
-		gl.flush();
-
-		lastTime = timeNow;
+		renderer.render(scene, camera);
 
 		requestAnimationFrame(animate);
+
+		lastTime = timeNow;
 	}
 
 	animate();

@@ -25,17 +25,15 @@
 // of the authors and should not be interpreted as representing official policies,
 // either expressed or implied, of the FreeBSD Project.
 
-///<reference path="typings/browserify/browserify.d.ts"/>
-///<reference path="typings/gl-matrix/gl-matrix.d.ts"/>
+///<reference path="typings/tsd.d.ts"/>
 var glmat = require('./bower_components/gl-matrix/dist/gl-matrix-min.js');
 import ShapeInstance = require('./structure');
 
 class StructureArtist {
 
-	public constructor(gl: WebGLRenderingContext, structure: ShapeInstance[]) {
-		this.gl = gl;
-		this.structure = structure;
-		this.init();
+    static CreateGeometry(structure: ShapeInstance[]): THREE.Geometry {
+
+        var geometry = new THREE.Geometry();
 
 		var triangles = [0, 1, 2, 1, 2, 3,
 			4, 5, 6, 5, 6, 7,
@@ -53,95 +51,22 @@ class StructureArtist {
         				1, 1, 0,
         				1, 1, 1];
 
-
-		this.allvertices = [];
-		this.alltriangles = [];
-
 		// TODO: do all that in the web worker and on the GPU !
 		for (var si = 0; si < structure.length; ++si) {
 			for (var vi = 0; vi < 8; ++vi) {
 				var vert = [0, 0, 0, 0];
 				glmat.vec4.transformMat4(vert, [vertices[3 * vi], vertices[3 * vi + 1], vertices[3 * vi + 2], 1], structure[si].geospace);
-				this.allvertices.push(vert[0], vert[1], vert[2]);
+                geometry.vertices.push(new THREE.Vector3(vert[0], vert[1], vert[2]));
 			}
 			var tris = [];
-			for (var fi = 0; fi < 12 * 3; ++fi) {
-				this.alltriangles.push(triangles[fi] + si * 8);
+			for (var fi = 0; fi < 12; ++fi) {
+                geometry.faces.push(
+                    new THREE.Face3(triangles[3 * fi] + si * 8, triangles[3 * fi + 1] + si * 8, triangles[3 * fi + 2] + si * 8)
+                );
 			}
 		}
+
+        return geometry;
 	}
-
-	private init() {
-        var gl = this.gl;
-
-        // gl.getExtension('OES_standard_derivatives');
-
-        // Browserify will bundle shaders and js all together for us.
-        // In order to do so, the tool must find a 'require' with a string literal argument
-        // to figure out what must be bundled together
-        require('./shaders/structure.vs');
-        require('./shaders/structure.fs');
-        
-        this.structureProgram = gl.createProgram();
-        gl.attachShader(this.structureProgram, StructureArtist.getShader(gl, './shaders/structure.vs'));
-        gl.attachShader(this.structureProgram, StructureArtist.getShader(gl, './shaders/structure.fs'));
-        gl.linkProgram(this.structureProgram);
-    }
-
-	public draw(prMatrix: Float32Array, mvMatrix: Float32Array): void {
-		
-		var gl = this.gl;
-		gl.useProgram(this.structureProgram);
-
-        var location = gl.getAttribLocation(this.structureProgram, 'aPos')
-        gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
-		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.allvertices), gl.STATIC_DRAW);
-        gl.vertexAttribPointer(location, 3, gl.FLOAT, false, 0, 0);
-        gl.enableVertexAttribArray(location);
-
-        // var solLocation = gl.getAttribLocation(this.structureProgram, "aCol");
-        // gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
-        // gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(sol), gl.STATIC_DRAW);
-        // gl.vertexAttribPointer(solLocation, 1, gl.FLOAT, false, 0, 0);
-        // gl.enableVertexAttribArray(solLocation);
-
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, gl.createBuffer());
-        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.alltriangles), gl.STATIC_DRAW);
-
-        gl.uniformMatrix4fv(gl.getUniformLocation(this.structureProgram, 'prMatrix'), false, prMatrix);
-		gl.uniformMatrix4fv(gl.getUniformLocation(this.structureProgram, 'mvMatrix'), false, mvMatrix);
-       
-        gl.drawElements(gl.TRIANGLES, this.alltriangles.length, gl.UNSIGNED_SHORT, 0);
-
-	}
-
-	private static getShader(gl : WebGLRenderingContext, path : string) : WebGLShader {
-
-        var shader: WebGLShader;
-
-        var ext = path.substring(path.lastIndexOf(".") + 1);
-
-        if (ext == 'fs')
-            shader = gl.createShader(gl.FRAGMENT_SHADER);
-        else if (ext == 'vs')
-            shader = gl.createShader(gl.VERTEX_SHADER);
-        else return null;
-
-        var glsl = require(path);
-
-        gl.shaderSource(shader, glsl());
-        gl.compileShader(shader);
-        if (gl.getShaderParameter(shader, gl.COMPILE_STATUS) == 0)
-            alert(path + "\n" + gl.getShaderInfoLog(shader));
-
-        return shader;
-    }
-
-	private gl: WebGLRenderingContext;
- 	private structureProgram: WebGLProgram;
-  	private structure: ShapeInstance[];
-	private allvertices: number[];
-	private alltriangles: number[];
-
 }
 export = StructureArtist;
