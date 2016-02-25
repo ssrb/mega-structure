@@ -28,6 +28,9 @@
     },
     "tinycolor/tinycolor.d.ts": {
       "commit": "dade4414712ce84e3c63393f1aae407e9e7e6af7"
+    },
+    "threejs/three-orbitcontrols.d.ts": {
+      "commit": "dade4414712ce84e3c63393f1aae407e9e7e6af7"
     }
   }
 }

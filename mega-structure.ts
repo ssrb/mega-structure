@@ -28,6 +28,7 @@
 ///<reference path="typings/tsd.d.ts"/>
 var glmat = require('./bower_components/gl-matrix/dist/gl-matrix-min.js');
 var tinycolor = require('./bower_components/tinycolor/tinycolor.js');
+
 import EisenScripts = require('./examples-generated');
 import ShapeInstance = require('./structure');
 
@@ -94,7 +95,7 @@ app.controller('CodemirrorCtrl', ['$scope', function($scope) {
 		var myWorker = new Worker("synthesizer-webworker.js");
 		myWorker.onmessage = function(e) {
 			$scope.structure = e.data;
-			mesh.geometry = CreateGeometry(e.data);	
+			mesh.geometry = CreateGeometry(e.data);
 			myWorker.terminate();
 		}
 		myWorker.postMessage($scope.cmModel);
@@ -161,6 +162,10 @@ window.onload = () => {
 	scene.add(lights[1]);
 	scene.add(lights[2]);
 	
+	var controls = new THREE.OrbitControls(camera, view);
+	controls.target.set(0, 0, 0);
+	controls.update();
+
 	var lastTime = new Date().getTime();
 	var theta = 0;
 	function animate() {
@@ -169,8 +174,10 @@ window.onload = () => {
 
 		// "Turntable"
 		var dt = (timeNow - lastTime) / (60 * 1000);
-		theta += 2 * Math.PI * 5 * dt
+		theta += 2 * Math.PI * 1 * dt
 		
+		//mesh.translateOnAxis(mesh.geometry.center(), mesh.geometry.center().length());
+
 		mesh.rotation.x = theta;
 		mesh.rotation.y = theta;
 
