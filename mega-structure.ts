@@ -73,6 +73,7 @@ function CreateGeometry(structure: ShapeInstance[]): THREE.Geometry {
 	return geometry;
 }
 
+var renderer: THREE.WebGLRenderer;
 var mesh: THREE.Mesh;
 
 var app: ng.IModule = angular.module('MegaStructure.App', ['ui.codemirror']);
@@ -95,7 +96,8 @@ app.controller('CodemirrorCtrl', ['$scope', function($scope) {
 		var myWorker = new Worker("synthesizer-webworker.js");
 		myWorker.onmessage = function(e) {
 			$scope.structure = e.data;
-			mesh.geometry = CreateGeometry(e.data);
+			mesh.geometry = CreateGeometry(e.data.structure);
+			renderer.setClearColor(new THREE.Color(e.data.background));
 			myWorker.terminate();
 		}
 		myWorker.postMessage($scope.cmModel);
@@ -109,7 +111,7 @@ window.onload = () => {
 
 	var view = document.getElementById("structure-view");
 
-	var renderer = new THREE.WebGLRenderer({ antialias: true });
+	renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 	renderer.setPixelRatio(window.devicePixelRatio);
 
 	var camera = new THREE.PerspectiveCamera(75, 1, 0.1, 50);

@@ -36,6 +36,6 @@ onmessage = function(e) {
 
 	console.log('Done. Posting result.');
 
-	this.postMessage(structure);
+	this.postMessage({ structure, background: synth.background });
 }
 

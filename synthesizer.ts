@@ -84,7 +84,7 @@ interface MatrixNode extends ASTNode {
 }
 
 interface ColorNode extends ASTNode {
-	val: string;
+	color: string;
 }
 
 interface HueNode extends ASTNode {
@@ -134,11 +134,8 @@ function normalizeAngle(angle: number, lower: number) {
 class Synthesizer {
 
 	public constructor(script : string) {
-		// TODO: seed RNG ?
 		this.ast = <ASTNode[]>eisenscript.parse(script);
 		this.index = Synthesizer.indexRules(this.ast);
-		//this.maxDepth = 10000000;
-		//this.maxObjects = 16000;
 	}
 
 	private static indexRules(ast: ASTNode[]): collections.Dictionary<string, [number, DefStatement[]]> {		
@@ -177,6 +174,12 @@ class Synthesizer {
 
 	public synthesize(): ShapeInstance[] {
 
+		// TODO: seed RNG ?
+
+		this.background = tinycolor("black").toHexString();
+		//this.maxDepth = -1;
+		//this.maxObjects = -1;
+
 		var shapes = new Array<ShapeInstance>();
 				
 		for (var si = 0; si < this.ast.length; ++si) {
@@ -190,6 +193,9 @@ class Synthesizer {
 				case "maxdepth":
 					this.maxDepth = (<MaxNode>this.ast[si]).max;
 					break;	
+				case "background":
+					this.background = tinycolor((<ColorNode>this.ast[si]).color).toHexString();
+					break;
 			}
 		}
 		
@@ -332,7 +338,7 @@ class Synthesizer {
 					break;
 				case "color":
 					var color = <ColorNode>sequence[si];
-					childColorspace = tinycolor(color.val).toHsv();
+					childColorspace = tinycolor(color.color).toHsv();
 					break;
 				case "sat":
 					var sat = <SatNode>sequence[si];
@@ -360,5 +366,6 @@ class Synthesizer {
 	private maxObjects: number;
 	private maxDepth: number;
 	private index: collections.Dictionary<string, [number, DefStatement[]]>;
+	public background: string;
 }
 export = Synthesizer;

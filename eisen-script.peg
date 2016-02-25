@@ -220,7 +220,7 @@ Alpha "alpha"
  
 SetColor "set color"
     =  ColorToken _ color:Color {
-        return color;
+        return  {type: "color", color};
     }
 
 Blend "blend"
@@ -260,7 +260,9 @@ Seed "seed"
     = SeedToken _ (Integer / "initial")
 
 Background "background"
-    = BackgroundToken _ Color
+    = BackgroundToken _? color:Color {
+        return  {type: "background", color};
+    }
 
 // For structure-synth compat
 Raytracer "raytracer"
@@ -304,10 +306,10 @@ Float "float"
 
 Color "color"
     = "#" HexDigit HexDigit HexDigit (HexDigit HexDigit HexDigit)? {
-        return {type: "color", val: text() }
+        return text()
     }
     / ColorName {
-        return {type: "color", val: text() }
+        return text()
     }
     
 ColorName = "white" / "black" / "red" / "green" / "blue" / "grey"
