@@ -107,6 +107,9 @@ interface MaxNode extends ASTNode {
 	max: number;
 }
 
+interface MinNode extends ASTNode {
+	min: number;
+}
 
 interface SynthFrame {
 	rule: string;
@@ -177,8 +180,12 @@ class Synthesizer {
 		// TODO: seed RNG ?
 
 		this.background = tinycolor("black").toHexString();
-		//this.maxDepth = -1;
-		//this.maxObjects = -1;
+
+		// Let them crash their browser if they're keen.
+		this.maxObjects = Infinity;
+		this.maxDepth = Infinity;
+		this.maxSize = Infinity;
+		this.minSize = 0;
 
 		var shapes = new Array<ShapeInstance>();
 				
@@ -195,6 +202,12 @@ class Synthesizer {
 					break;	
 				case "background":
 					this.background = tinycolor((<ColorNode>this.ast[si]).color).toHexString();
+					break;
+				case "minsize":
+					this.minSize = (<MinNode>this.ast[si]).min;
+					break;
+				case "masize":
+					this.maxSize = (<MaxNode>this.ast[si]).max;
 					break;
 			}
 		}
@@ -261,12 +274,22 @@ class Synthesizer {
 		switch (prod.next.type) {
 			case "shape":
 				for (var mi = 0; mi < childGeospaces.length; ++mi) {
-					shapes.push({ shape: prod.next.name, geospace: childGeospaces[mi], colorspace: childColorspaces[mi] });
+					var diag = [1, 1, 1, 0];
+					glmat.vec4.transformMat4(diag, diag, childGeospaces[mi]);
+					var size = glmat.vec4.length(diag);
+					if (this.minSize <= size && size <= this.maxSize) {
+						shapes.push({ shape: prod.next.name, geospace: childGeospaces[mi], colorspace: childColorspaces[mi] });
+					}
 				}
 				break;
 			case "call":
 				for (var mi = 0; mi < childGeospaces.length; ++mi) {
-					queue.enqueue({ rule: prod.next.name, globaldepth, ruledepth, geospace: childGeospaces[mi], colorspace: childColorspaces[mi] });
+					var diag = [1, 1, 1, 0];
+					glmat.vec4.transformMat4(diag, diag, childGeospaces[mi]);
+					var size = glmat.vec4.length(diag);
+					if (this.minSize <= size && size <= this.maxSize) {
+						queue.enqueue({ rule: prod.next.name, globaldepth, ruledepth, geospace: childGeospaces[mi], colorspace: childColorspaces[mi] });
+					}
 				}
 				break;
 		}
@@ -365,6 +388,8 @@ class Synthesizer {
 	private ast: ASTNode[];
 	private maxObjects: number;
 	private maxDepth: number;
+	private maxSize: number;
+	private minSize: number;
 	private index: collections.Dictionary<string, [number, DefStatement[]]>;
 	public background: string;
 }

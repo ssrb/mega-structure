@@ -251,10 +251,14 @@ MaxObjects "maxobjects"
     }
 
 Minsize "minsize"
-    = MinSizeToken _ Float
+    = MinSizeToken _? min:Float {
+        return  {type: "minsize", min};
+    }
 
 Naxsize "maxsize"
-    =  MaxSizeToken _ Float
+    =  MaxSizeToken _? max:Float {
+        return  {type: "maxsize", max};
+    }
     
 Seed "seed"
     = SeedToken _ (Integer / "initial")
