@@ -80,7 +80,7 @@ var app: ng.IModule = angular.module('MegaStructure.App', ['ui.codemirror']);
 
 app.controller('CodemirrorCtrl', ['$scope', function($scope) {	
 	$scope.examples = Object.keys(EisenScripts);
-	$scope.example = 'mondrian';
+	$scope.example = 'frameinframe';
 	$scope.exampleChanged = function() {
 		$scope.cmModel = EisenScripts[$scope.example];
 	}
@@ -115,7 +115,7 @@ window.onload = () => {
 	renderer.setPixelRatio(window.devicePixelRatio);
 
 	var camera = new THREE.PerspectiveCamera(75, 1, 0.1, 50);
-	camera.position.z = 3
+	camera.position.z = 1.5;
 
 	function doResize(): void {
 		var w = view.offsetWidth, h = window.innerHeight - document.getElementById("header").offsetHeight;
