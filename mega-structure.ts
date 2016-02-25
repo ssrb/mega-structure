@@ -98,6 +98,7 @@ app.controller('CodemirrorCtrl', ['$scope', function($scope) {
 			$scope.structure = e.data;
 			mesh.geometry = CreateGeometry(e.data.structure);
 			renderer.setClearColor(new THREE.Color(e.data.background));
+			document.body.style.backgroundColor = e.data.background;
 			myWorker.terminate();
 		}
 		myWorker.postMessage($scope.cmModel);
