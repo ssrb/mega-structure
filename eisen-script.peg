@@ -299,24 +299,15 @@ Float "float"
 
 
 Color "color"
-    = "#" b1:(HexDigit HexDigit HexDigit) b2:(HexDigit HexDigit HexDigit)? {
-        if (b2) {
-            return {type: "color", 
-                    r: parseInt('0x' + b1[0] + b1[1]) / 255, 
-                    g: parseInt('0x' + b1[2] + b2[0]) / 255,
-                    b: parseInt('0x' + b2[1] + b2[2]) / 255};
-        } else {
-            return {type: "color", 
-                    r: parseInt('0x' + b1[0]) / 15, 
-                    g: parseInt('0x' + b1[1]) / 15,
-                    b: parseInt('0x' + b1[2]) / 15};
-        }
+    = "#" HexDigit HexDigit HexDigit (HexDigit HexDigit HexDigit)? {
+        return {type: "color", val: text() }
     }
- // TODO
-    / "white" / "black" / "red" / "green" / "blue" / "grey" {
-        return {r: 0, g: 0, b: 0};
+    / ColorName {
+        return {type: "color", val: text() }
     }
     
+ColorName = "white" / "black" / "red" / "green" / "blue" / "grey"
+
 // Simple arithmetic
 ArithExpression "arithmetic expression"
   = head:ArithTerm tail:(_? ("+" / "-") _? ArithTerm)* {
@@ -434,3 +425,4 @@ Reserved "reserved"
     / MatrixToken
     / RaytracerToken
     / Shape !IdentifierPart
+    / ColorName !IdentifierPart

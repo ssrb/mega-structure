@@ -84,9 +84,7 @@ interface MatrixNode extends ASTNode {
 }
 
 interface ColorNode extends ASTNode {
-	r: number;
-	g: number;
-	b: number;
+	val: string;
 }
 
 interface HueNode extends ASTNode {
@@ -326,7 +324,7 @@ class Synthesizer {
 					break;
 				case "color":
 					var color = <ColorNode>sequence[si];
-					childColorspace = tinycolor.fromRatio(color).toHsv();
+					childColorspace = tinycolor(color.val).toHsv();
 					break;
 				case "sat":
 					var sat = <SatNode>sequence[si];
