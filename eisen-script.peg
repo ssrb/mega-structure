@@ -198,22 +198,22 @@ Matrix "matrix"
 // // TODO Colorspace transforms
 Hue "hue"
     = HueToken _ hue:ArithExpression {
-        return {hue};
+        return {type: "hue", h: hue};
     }   
    
 Sat "saturation"
     = SatToken _ sat:ArithExpression {
-        return {sat};
+        return {type: "sat", s: sat};
     }
         
 Bright "brightness"
     = BrightnessToken _ brightness:ArithExpression {
-        return {brightness};
+        return {type: "brightness", v: brightness};
     }   
  
 Alpha "alpha"
     = AlphaToken _ alpha:ArithExpression {
-        return {alpha};
+        return {type: "alpha", a: alpha};
     }
  
 SetColor "set color"

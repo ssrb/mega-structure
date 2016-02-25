@@ -24,10 +24,12 @@
 // The views and conclusions contained in the software and documentation are those
 // of the authors and should not be interpreted as representing official policies,
 // either expressed or implied, of the FreeBSD Project.
+///<reference path="typings/tsd.d.ts"/>
+var tinycolor = require('./bower_components/tinycolor/tinycolor.js');
 
 interface ShapeInstance {
 	shape: string;
 	geospace: Float32Array;
-	colorspace: number[];
+	colorspace: ColorFormats.HSVA;
 }
 export = ShapeInstance;

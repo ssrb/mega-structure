@@ -28,6 +28,7 @@
 ///<reference path="typings/tsd.d.ts"/>
 var eisenscript = require('./eisen-script');
 var glmat = require('./bower_components/gl-matrix/dist/gl-matrix-min.js');
+var tinycolor = require('./bower_components/tinycolor/tinycolor.js');
 
 import ShapeInstance = require('./structure');
 import collections = require('./node_modules/typescript-collections/collections');
@@ -88,12 +89,42 @@ interface ColorNode extends ASTNode {
 	b: number;
 }
 
+interface HueNode extends ASTNode {
+	h: number;
+}
+
+interface SatNode extends ASTNode {
+	s: number;
+}
+
+interface BrightnessNode extends ASTNode {
+	v: number;
+}
+
+interface AlphaNode extends ASTNode {
+	a: number;
+}
 
 interface SynthFrame {
 	rule: string;
 	depth: number;
 	geospace: Float32Array;
-	colorspace: number[];
+	colorspace: ColorFormats.HSVA;
+}
+
+function clamp(value: number, min : number, max : number) : number {
+	return Math.min(Math.max(value, min), max);
+};
+
+function normalizeAngle(angle: number, lower: number) {
+	var upper = lower + 360;
+	while (angle < lower) {
+		angle += 360;
+	}
+	while (angle > upper) {
+		angle -= 360;
+	}
+	return angle;
 }
 
 class Synthesizer {
@@ -102,6 +133,7 @@ class Synthesizer {
 		// TODO: seed RNG ?
 		this.ast = <ASTNode[]>eisenscript.parse(script);
 		this.index = Synthesizer.indexRules(this.ast);
+		this.maxDepth = 10000000;
 	}
 
 	private static indexRules(ast: ASTNode[]): collections.Dictionary<string, [number, DefStatement[]]> {		
@@ -162,7 +194,7 @@ class Synthesizer {
 	
 		var stack = new collections.Stack<SynthFrame>();
 
-		this.synthProduction(prod, 0, glmat.mat4.create(), [1, 0, 0], stack, shapes);
+		this.synthProduction(prod, 0, glmat.mat4.create(), tinycolor("RED").toHsv(), stack, shapes);
 		
 		while (!stack.isEmpty()) {
 
@@ -191,9 +223,6 @@ class Synthesizer {
 			}
 
 			for (var pi = 0; pi < clause.production.length; ++pi) {
-
-				// TODO: double check geospace & colorspace are unchanged between calls, take a copy if needed
-
 				this.synthProduction(clause.production[pi], depth + 1, geospace, colorspace, stack, shapes);
 			}
 		}
@@ -202,7 +231,7 @@ class Synthesizer {
 	private synthProduction(prod: InvocStatement, 
 						depth: number, 
 						geospace: Float32Array, 
-						colorspace: number[], 
+						colorspace: ColorFormats.HSVA, 
 						stack: collections.Stack<SynthFrame>, 
 						shapes: ShapeInstance[]) : void {
 
@@ -224,12 +253,12 @@ class Synthesizer {
 		}
 	}
 
-	private transform(transforms: Transformation[], geospace: Float32Array, colorspace: number[]): [Float32Array[], number[][]] {
+	private transform(transforms: Transformation[], geospace: Float32Array, colorspace: ColorFormats.HSVA): [Float32Array[], ColorFormats.HSVA[]] {
 				
 		var childGeospaces = new Array<Float32Array>();
-		var childColorspaces = new Array<number[]>();
+		var childColorspaces = new Array<ColorFormats.HSVA>();
 
-		var stack = new collections.Stack<[number, Float32Array, number[]]>();
+		var stack = new collections.Stack<[number, Float32Array, ColorFormats.HSVA]>();
 		stack.push([0, geospace, colorspace]);
 		while (!stack.isEmpty()) {
 			var [ti, childGeospace, childColorSpace] = stack.pop();
@@ -248,10 +277,10 @@ class Synthesizer {
 		return [childGeospaces, childColorspaces];
 	}
 
-	private transformOne(sequence: ASTNode[], geospace: Float32Array, colorspace: number[]): [Float32Array, number[]] {
+	private transformOne(sequence: ASTNode[], geospace: Float32Array, colorspace: ColorFormats.HSVA): [Float32Array, ColorFormats.HSVA] {
 
 		var childGeospace = new Float32Array(geospace);
-		var childColorspace = colorspace.slice(0);
+		var childColorspace = { h: colorspace.h, s: colorspace.s, v: colorspace.v, a: colorspace.a };
 
 		for (var si = 0; si < sequence.length; ++si) {
 			switch (sequence[si].type) {
@@ -290,9 +319,24 @@ class Synthesizer {
 					break;
 				case "color":
 					var color = <ColorNode>sequence[si];
-					childColorspace = [color.r, color.g, color.b];
+					childColorspace = tinycolor.fromRatio(color).toHsv();
 					break;
-				// TODO colorspace			
+				case "sat":
+					var sat = <SatNode>sequence[si];
+					childColorspace.s = clamp(childColorspace.s * sat.s, 0, 1);
+					break;
+				case "hue":	
+					var hue = <HueNode>sequence[si];
+					childColorspace.h = normalizeAngle(childColorspace.h + hue.h, 0);					
+					break;			
+				case "brightness":
+					var brightness = <BrightnessNode>sequence[si];
+					childColorspace.v = clamp(childColorspace.v * brightness.v, 0, 1);
+					break;
+				case "alpha":
+					var alpha = <AlphaNode>sequence[si];
+					childColorspace.a = clamp(childColorspace.a * alpha.a, 0, 1);
+					break;	
 			}
 		}
 

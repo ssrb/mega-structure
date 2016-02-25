@@ -27,6 +27,7 @@
 
 ///<reference path="typings/tsd.d.ts"/>
 var glmat = require('./bower_components/gl-matrix/dist/gl-matrix-min.js');
+var tinycolor = require('./bower_components/tinycolor/tinycolor.js');
 import EisenScripts = require('./examples-generated');
 import ShapeInstance = require('./structure');
 
@@ -60,7 +61,8 @@ function CreateGeometry(structure: ShapeInstance[]): THREE.Geometry {
 		var tris = [];
 		for (var fi = 0; fi < 12; ++fi) {
 			var face = new THREE.Face3(triangles[3 * fi] + si * 8, triangles[3 * fi + 1] + si * 8, triangles[3 * fi + 2] + si * 8);
-			face.color = new THREE.Color(structure[si].colorspace[0], structure[si].colorspace[1], structure[si].colorspace[2]);
+			var rgb = tinycolor(structure[si].colorspace).toRgb();
+			face.color = new THREE.Color(rgb.r / 255, rgb.g / 255, rgb.b / 255);
 			geometry.faces.push(
 				face
 			);
