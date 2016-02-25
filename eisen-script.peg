@@ -237,14 +237,18 @@ Shape "shape"
 
 SetStatement "set statement"
     = SetToken _ what:(Maxdepth / MaxObjects / Minsize / Naxsize / Seed / Background / Raytracer) {
-        return {type: "set", val: what}
+        return what
     }
 
 Maxdepth "maxdepth"
-    = MaxDepthToken _ Integer
+    = MaxDepthToken _? max:UnsignedIntegerLitteral {
+        return  {type: "maxdepth", max};
+    }
     
 MaxObjects "maxobjects"
-    = MaxObjectsToken _ Integer
+    = MaxObjectsToken  _? max:UnsignedIntegerLitteral {
+        return  {type: "maxobjects", max};
+    }
 
 Minsize "minsize"
     = MinSizeToken _ Float

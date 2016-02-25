@@ -103,6 +103,11 @@ interface AlphaNode extends ASTNode {
 	a: number;
 }
 
+interface MaxNode extends ASTNode {
+	max: number;
+}
+
+
 interface SynthFrame {
 	rule: string;
 	globaldepth: number;
@@ -179,9 +184,12 @@ class Synthesizer {
 				case "invoc":	
 					this.synthesizeOne(<InvocStatement>this.ast[si], shapes);
 					break;
-				case "set":
-					// TODO
+				case "maxobjects":
+					this.maxObjects = (<MaxNode>this.ast[si]).max;
 					break;
+				case "maxdepth":
+					this.maxDepth = (<MaxNode>this.ast[si]).max;
+					break;	
 			}
 		}
 		
@@ -192,11 +200,11 @@ class Synthesizer {
 
 	private synthesizeOne(prod: InvocStatement, shapes: ShapeInstance[]) : void {
 	
-		var stack = new collections.Stack<SynthFrame>();
+		var queue = new collections.Queue<SynthFrame>();
 
-		this.synthProduction(prod, 0, 0, glmat.mat4.create(), tinycolor("RED").toHsv(), stack, shapes);
+		this.synthProduction(prod, 0, 0, glmat.mat4.create(), tinycolor("RED").toHsv(), queue, shapes);
 		
-		while (!stack.isEmpty()) {
+		while (!queue.isEmpty()) {
 
 			if (shapes.length >= this.maxObjects) {
 				console.log("max objects reached");
@@ -205,7 +213,7 @@ class Synthesizer {
 
 			// TODO: Report progress here
 
-			var { rule, globaldepth, ruledepth, geospace, colorspace } = stack.pop();
+			var { rule, globaldepth, ruledepth, geospace, colorspace } = queue.dequeue();
 
 			if (globaldepth >= this.maxDepth) {
 				continue;
@@ -215,7 +223,7 @@ class Synthesizer {
 
 			if (clause.maxdepth >= 0 && ruledepth >= clause.maxdepth) {
 				if (clause.failover) {
-					stack.push({ rule: clause.failover, globaldepth: globaldepth + 1, ruledepth: 0, geospace, colorspace });
+					queue.enqueue({ rule: clause.failover, globaldepth: globaldepth + 1, ruledepth: 0, geospace, colorspace });
 				}
 				continue;
 			}
@@ -227,7 +235,7 @@ class Synthesizer {
 				// if we swtich to a new rule, reset the 
 				var samerule = rule == clause.production[pi].next.name;
 
-				this.synthProduction(clause.production[pi], globaldepth, samerule ? ruledepth+1 : 0, geospace, colorspace, stack, shapes);
+				this.synthProduction(clause.production[pi], globaldepth, samerule ? ruledepth+1 : 0, geospace, colorspace, queue, shapes);
 			}
 		}
 	}
@@ -237,7 +245,7 @@ class Synthesizer {
 							ruledepth: number, 
 							geospace: Float32Array, 
 							colorspace: ColorFormats.HSVA, 
-							stack: collections.Stack<SynthFrame>, 
+							queue: collections.Queue<SynthFrame>, 
 							shapes: ShapeInstance[]) : void {
 
 		var [childGeospaces, childColorspaces] = this.transform(prod.transformations, geospace, colorspace);
@@ -252,7 +260,7 @@ class Synthesizer {
 				break;
 			case "call":
 				for (var mi = 0; mi < childGeospaces.length; ++mi) {
-					stack.push({ rule: prod.next.name, globaldepth, ruledepth, geospace: childGeospaces[mi], colorspace: childColorspaces[mi] });
+					queue.enqueue({ rule: prod.next.name, globaldepth, ruledepth, geospace: childGeospaces[mi], colorspace: childColorspaces[mi] });
 				}
 				break;
 		}
