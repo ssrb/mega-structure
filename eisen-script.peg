@@ -123,12 +123,14 @@ Next = name:RuleName {
     }
 
 Transformation "transformation"
-    = multiplier:Multiplier? "{" _? sequence:ElementaryTransformationSeq? _? "}" { 
+    = _? multiplier:Multiplier? "{" _? sequence:ElementaryTransformationSeq? _? "}" { 
         return {multiplier: multiplier ? multiplier : 1, sequence: optionalList(sequence)}; 
     }
 
 Multiplier "multiplier"
-    = UnsignedIntegerLitteral _? "*" _?
+    = multiplier:UnsignedIntegerLitteral _? "*" _? {
+        return multiplier;
+    }
     
 ElementaryTransformationSeq  
     = head:ElementaryTransformation tail:(_ ElementaryTransformation)* {
@@ -273,8 +275,8 @@ Character "character"
     = [a-z]i
 
 UnsignedIntegerLitteral
-    = int:UnsignedInteger {
-        return parseInt(int);
+    = UnsignedInteger {
+        return parseInt(text());
     }
     
 UnsignedInteger "integer"
