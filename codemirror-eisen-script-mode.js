@@ -29,6 +29,20 @@
     mod(CodeMirror);
 })(function(CodeMirror) {
 "use strict";
-CodeMirror.defineMode("eisen-script", function (config) {});
+
+  CodeMirror.defineMode("eisen-script", function (config) {
+
+    return {
+        startState: function () {
+          return {};
+        },
+        token: function (stream, state) {
+          stream.next();
+          return null;
+        }
+      };
+
+
+  });
 
 });
