@@ -30,77 +30,237 @@
 })(function(CodeMirror) {
 "use strict";
 
-  CodeMirror.defineMode("eisen-script", function (config) {
+CodeMirror.defineMode("eisen-script", function(config, parserConfig) {
+  var indentUnit = config.indentUnit,
+      statementIndentUnit = parserConfig.statementIndentUnit || indentUnit,
+      dontAlignCalls = parserConfig.dontAlignCalls,
 
-    function identifier(stream) {
-      return stream.match(/^[a-zA-Z_][a-zA-Z0-9_]*/);
+      indentStatements = parserConfig.indentStatements !== false,
+
+      defKeywords = words("rule"),
+
+      keywords = words("rule set md maxdepth w weight maxobjects minsize maxsize seed background h hue sat b brightness a alpha color blend initial x y z rx ry rz s fx fy fz m raytrace"),
+
+      builtin = words("box grid sphere line point triangle mesh cylinder tube white black red green blue grey"),
+
+      isPunctuationChar = /[\[\]{}\(\),;\:\.]/,
+
+      numberStart = /[\d\.]/,
+      number = /^(?:0x[a-f\d]+|0b[01]+|(?:\d+\.?\d*|\.\d+)(?:e[-+]?\d+)?)(u|ll?|l|f)?/i,
+
+      colorStart = /[\#]/,
+      color = /^#[\da-f]{3}([\da-f]{3})?/i,
+
+      isOperatorChar = /[+\-/*]/,
+
+      namespaceSeparator = "::";
+
+  var curPunc, isDefKeyword;
+
+  function Context(indented, column, type, align, prev) {
+    this.indented = indented;
+    this.column = column;
+    this.type = type;
+    this.align = align;
+    this.prev = prev;
+  }
+
+
+  function isStatement(type) {
+    return type == "statement";
+  }
+
+  function pushContext(state, col, type) {
+    var indent = state.indented;
+    if (state.context && isStatement(state.context.type) && !isStatement(type))
+      indent = state.context.indented;
+    return state.context = new Context(indent, col, type, null, state.context);
+  }
+
+  function popContext(state) {
+    var t = state.context.type;
+    if (t == ")" || t == "]" || t == "}")
+      state.indented = state.context.indented;
+    return state.context = state.context.prev;
+  }
+
+  function typeBefore(stream, state) {
+    if (state.prevToken == "variable" || state.prevToken == "variable-3") return true;
+    if (/\S(?:[^- ]>|[*\]])\s*$|\*$/.test(stream.string.slice(0, stream.start))) return true;
+  }
+
+  function isTopScope(context) {
+    for (;;) {
+      if (!context || context.type == "top") return true;
+      if (context.type == "}") return false;
+      context = context.prev;
     }
+  }
 
-    function keyword(stream) {
-      return stream.match(/^(set|rule|md|maxdepth|w|weight|maxobjects|minsize|maxsize|seed|background|h|hue|sat|b|brightness|a|alpha|color|blend|initial|x|y|z|rx|ry|rz|s|fx|fy|fz|m|raytrace)\W/);
+
+
+  function words(str) {
+    var obj = {}, words = str.split(" ");
+    for (var i = 0; i < words.length; ++i) obj[words[i]] = true;
+    return obj;
+  }
+
+  function contains(words, word) {
+    if (typeof words === "function") {
+      return words(word);
+    } else {
+      return words.propertyIsEnumerable(word);
     }
+  }
 
-    function builtin(stream) {
-      return stream.match(/^(white|box)\W/);
-    }
-
-    var numberStart = /[\d\.]/;
-    var number = /^(?:0x[a-f\d]+|0b[01]+|(?:\d+\.?\d*|\.\d+)(?:e[-+]?\d+)?)(u|ll?|l|f)?/i;
-
-    return {
-      startState: function () {
-        return {
-          inComment: false,
-          inChracterClass: false,
-          braced: 0,
-          lhs: true,
-          localState: null
-        };
-      },
-
-      token: function (stream, state) {
-       
-        if (!state.inComment && stream.match(/^\/\*/)) {
-          state.inComment = true;
-        }
-
-        //return state
-        if (state.inComment) {
-          while (state.inComment && !stream.eol()) {
-            if (stream.match(/\*\//)) {
-              state.inComment = false; // Clear flag
-            } else {
-              stream.match(/^.[^\*]*/);
-            }
-          }
-          return "comment";
-        } else if (state.inChracterClass) {
-            while (state.inChracterClass && !stream.eol()) {
-              if (!(stream.match(/^[^\]\\]+/) || stream.match(/^\\./))) {
-                state.inChracterClass = false;
-              }
-            }
-        } else if (numberStart.test(stream.peek())) {       
-          if (stream.match(number)) return "number"
-          stream.next()
-        } else if (stream.match(/^\/\//)) {
-          stream.skipToEnd();
-          return "comment";
-        } else if (keyword(stream)) {          
-          return 'keyword';
-        } else if (builtin(stream)) {          
-          return 'builtin';
-        } else if (identifier(stream)) {          
-          return 'identifier';
-        } else if (['{', '}'].indexOf(stream.peek()) != -1) {
-          stream.next();
-          return 'bracket';
-        } else if (!stream.eatSpace()) {
-          stream.next();
-        }
-        return null;
+  function tokenComment(stream, state) {
+    var maybeEnd = false, ch;
+    while (ch = stream.next()) {
+      if (ch == "/" && maybeEnd) {
+        state.tokenize = null;
+        break;
       }
-    };
-  });
+      maybeEnd = (ch == "*");
+    }
+    return "comment";
+  }
+
+  function tokenBase(stream, state) {
+    var ch = stream.next();
+   
+    if (isPunctuationChar.test(ch)) {
+      curPunc = ch;
+      return null;
+    }
+
+    if (colorStart.test(ch)) {
+      stream.backUp(1)
+      if (stream.match(color)) return "number"
+      stream.next()
+    }
+
+    if (numberStart.test(ch)) {
+      stream.backUp(1)
+      if (stream.match(number)) return "number"
+      stream.next()
+    }
+    if (ch == "/") {
+      if (stream.eat("*")) {
+        state.tokenize = tokenComment;
+        return tokenComment(stream, state);
+      }
+      if (stream.eat("/")) {
+        stream.skipToEnd();
+        return "comment";
+      }
+    }
+
+    if (isOperatorChar.test(ch)) {
+      stream.eatWhile(isOperatorChar);
+      return "operator";
+    }
+
+    stream.eatWhile(/[\w\$_\xa1-\uffff]/);
+    // set raytracer::
+    if (namespaceSeparator) while (stream.match(namespaceSeparator))
+      stream.eatWhile(/[\w\$_\xa1-\uffff]/);
+
+    var cur = stream.current();
+
+    if (contains(keywords, cur)) {
+      if (contains(defKeywords, cur)) isDefKeyword = true;
+      return "keyword";
+    }
+
+    if (contains(builtin, cur)) {
+      return "builtin";
+    }
+    
+    return "variable";
+  }
+
+  
+
+  return {
+    startState: function(basecolumn) {
+      return {
+        tokenize: null,
+        context: new Context((basecolumn || 0) - indentUnit, 0, "top", false),
+        indented: 0,
+        startOfLine: true,
+        prevToken: null
+      };
+    },
+
+    token: function(stream, state) {
+      var ctx = state.context;
+      if (stream.sol()) {
+        if (ctx.align == null) ctx.align = false;
+        state.indented = stream.indentation();
+        state.startOfLine = true;
+      }
+      if (stream.eatSpace()) return null;
+      curPunc = isDefKeyword = null;
+      var style = (state.tokenize || tokenBase)(stream, state);
+      if (style == "comment" || style == "meta") return style;
+      if (ctx.align == null) ctx.align = true;
+
+      if (curPunc == "{") pushContext(state, stream.column(), "}");
+      else if (curPunc == "[") pushContext(state, stream.column(), "]");
+      else if (curPunc == "(") pushContext(state, stream.column(), ")");
+      else if (curPunc == "}") {
+        while (isStatement(ctx.type)) ctx = popContext(state);
+        if (ctx.type == "}") ctx = popContext(state);
+        while (isStatement(ctx.type)) ctx = popContext(state);
+      }
+      else if (curPunc == ctx.type) popContext(state);
+      else if (indentStatements &&
+               (((ctx.type == "}" || ctx.type == "top") && curPunc != ";") ||
+                (isStatement(ctx.type) && curPunc == "newstatement"))) {
+        var type = "statement";       
+        pushContext(state, stream.column(), type);
+      }
+
+      if (style == "variable" &&
+          ((state.prevToken == "def" ||
+            (parserConfig.typeFirstDefinitions && typeBefore(stream, state) &&
+             isTopScope(state.context) && stream.match(/^\s*\(/, false)))))
+        style = "def";
+      
+      if (style == "def" && parserConfig.styleDefs === false) style = "variable";
+
+      state.startOfLine = false;
+      state.prevToken = isDefKeyword ? "def" : style || curPunc;
+      return style;
+    },
+
+    indent: function(state, textAfter) {
+      if (state.tokenize != tokenBase && state.tokenize != null) return CodeMirror.Pass;
+      var ctx = state.context, firstChar = textAfter && textAfter.charAt(0);
+      if (isStatement(ctx.type) && firstChar == "}") ctx = ctx.prev;
+      
+      var closing = firstChar == ctx.type;
+
+      if (parserConfig.allmanIndentation && /[{(]/.test(firstChar)) {
+        while (ctx.type != "top" && ctx.type != "}") ctx = ctx.prev
+        return ctx.indented
+      }
+      if (isStatement(ctx.type))
+        return ctx.indented + (firstChar == "{" ? 0 : statementIndentUnit);
+      if (ctx.align && (!dontAlignCalls || ctx.type != ")"))
+        return ctx.column + (closing ? 0 : 1);
+      if (ctx.type == ")" && !closing)
+        return ctx.indented + statementIndentUnit;
+
+      return ctx.indented + (closing ? 0 : indentUnit);
+    },
+
+    electricInput: /^\s*[{}]$/,
+    blockCommentStart: "/*",
+    blockCommentEnd: "*/",
+    lineComment: "//",
+    fold: "brace"
+  };
+});
 
 });
