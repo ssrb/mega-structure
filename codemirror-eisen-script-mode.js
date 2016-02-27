@@ -32,17 +32,75 @@
 
   CodeMirror.defineMode("eisen-script", function (config) {
 
+    function identifier(stream) {
+      return stream.match(/^[a-zA-Z_][a-zA-Z0-9_]*/);
+    }
+
+    function keyword(stream) {
+      return stream.match(/^(set|rule|md|maxdepth|w|weight|maxobjects|minsize|maxsize|seed|background|h|hue|sat|b|brightness|a|alpha|color|blend|initial|x|y|z|rx|ry|rz|s|fx|fy|fz|m|raytrace)\W/);
+    }
+
+    function builtin(stream) {
+      return stream.match(/^(white|box)\W/);
+    }
+
+    var numberStart = /[\d\.]/;
+    var number = /^(?:0x[a-f\d]+|0b[01]+|(?:\d+\.?\d*|\.\d+)(?:e[-+]?\d+)?)(u|ll?|l|f)?/i;
+
     return {
-        startState: function () {
-          return {};
-        },
-        token: function (stream, state) {
-          stream.next();
-          return null;
+      startState: function () {
+        return {
+          inComment: false,
+          inChracterClass: false,
+          braced: 0,
+          lhs: true,
+          localState: null
+        };
+      },
+
+      token: function (stream, state) {
+       
+        if (!state.inComment && stream.match(/^\/\*/)) {
+          state.inComment = true;
         }
-      };
 
-
+        //return state
+        if (state.inComment) {
+          while (state.inComment && !stream.eol()) {
+            if (stream.match(/\*\//)) {
+              state.inComment = false; // Clear flag
+            } else {
+              stream.match(/^.[^\*]*/);
+            }
+          }
+          return "comment";
+        } else if (state.inChracterClass) {
+            while (state.inChracterClass && !stream.eol()) {
+              if (!(stream.match(/^[^\]\\]+/) || stream.match(/^\\./))) {
+                state.inChracterClass = false;
+              }
+            }
+        } else if (numberStart.test(stream.peek())) {       
+          if (stream.match(number)) return "number"
+          stream.next()
+        } else if (stream.match(/^\/\//)) {
+          stream.skipToEnd();
+          return "comment";
+        } else if (keyword(stream)) {          
+          return 'keyword';
+        } else if (builtin(stream)) {          
+          return 'builtin';
+        } else if (identifier(stream)) {          
+          return 'identifier';
+        } else if (['{', '}'].indexOf(stream.peek()) != -1) {
+          stream.next();
+          return 'bracket';
+        } else if (!stream.eatSpace()) {
+          stream.next();
+        }
+        return null;
+      }
+    };
   });
 
 });

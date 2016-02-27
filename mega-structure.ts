@@ -88,6 +88,7 @@ app.controller('CodemirrorCtrl', ['$scope', function($scope) {
 
 	$scope.cmOption = {
 		lineNumbers: true,
+		matchBrackets: true,
 		mode: 'eisen-script',
 		theme: 'twilight'
 	};
