@@ -39,7 +39,7 @@ CodeMirror.defineMode("eisen-script", function(config, parserConfig) {
 
       defKeywords = words("rule"),
 
-      keywords = words("rule set md maxdepth w weight maxobjects minsize maxsize seed background h hue sat b brightness a alpha color blend initial x y z rx ry rz s fx fy fz m raytrace"),
+      keywords = words("rule set md maxdepth w weight maxobjects minsize maxsize seed background h hue sat b brightness a alpha color blend initial x y z rx ry rz s fx fy fz m raytracer"),
 
       builtin = words("box grid sphere line point triangle mesh cylinder tube white black red green blue grey"),
 
@@ -49,7 +49,7 @@ CodeMirror.defineMode("eisen-script", function(config, parserConfig) {
       number = /^(?:0x[a-f\d]+|0b[01]+|(?:\d+\.?\d*|\.\d+)(?:e[-+]?\d+)?)(u|ll?|l|f)?/i,
 
       colorStart = /[\#]/,
-      color = /^#[\da-f]{3}([\da-f]{3})?/i,
+      color = /^#[\da-f]{3}(?:[\da-f]{3})?/i,
 
       isOperatorChar = /[+\-/*]/,
 
@@ -134,7 +134,11 @@ CodeMirror.defineMode("eisen-script", function(config, parserConfig) {
     }
 
     if (colorStart.test(ch)) {
-      stream.backUp(1)
+      stream.backUp(1)   
+      if (stream.match("#define")) {
+        isDefKeyword = true;
+        return "keyword";
+      }
       if (stream.match(color)) return "number"
       stream.next()
     }
@@ -162,8 +166,8 @@ CodeMirror.defineMode("eisen-script", function(config, parserConfig) {
 
     stream.eatWhile(/[\w\$_\xa1-\uffff]/);
     // set raytracer::
-    if (namespaceSeparator) while (stream.match(namespaceSeparator))
-      stream.eatWhile(/[\w\$_\xa1-\uffff]/);
+    //if (namespaceSeparator) while (stream.match(namespaceSeparator))
+    //  stream.eatWhile(/[\w\$_\xa1-\uffff]/);
 
     var cur = stream.current();
 
