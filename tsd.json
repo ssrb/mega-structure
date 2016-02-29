@@ -31,6 +31,9 @@
     },
     "threejs/three-orbitcontrols.d.ts": {
       "commit": "dade4414712ce84e3c63393f1aae407e9e7e6af7"
+    },
+    "seedrandom/seedrandom.d.ts": {
+      "commit": "b10e5ade29708bb0a7d21916a9fe289973520e89"
     }
   }
 }
