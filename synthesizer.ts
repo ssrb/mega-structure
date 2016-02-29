@@ -238,10 +238,9 @@ class Synthesizer {
 			if (globalDepth >= this.maxDepth) {
 				continue;
 			}
+			++globalDepth;
 
 			var clause = this.pickClause(rule);
-
-			var thisClauseDepth = 0;
 
 			var clauseDepthMapCopy = new collections.Dictionary<number, number>();
 			clauseDepthMap.forEach(function(key: number, value: number) {
@@ -250,7 +249,7 @@ class Synthesizer {
 
 			if (clause.maxdepth >= 0) {
 
-				thisClauseDepth = clauseDepthMapCopy.getValue(clause.id);
+				var thisClauseDepth = clauseDepthMapCopy.getValue(clause.id);
 				
 				if (undefined == thisClauseDepth) {
 					thisClauseDepth = 0;
@@ -269,9 +268,7 @@ class Synthesizer {
 					clauseDepthMapCopy.setValue(clause.id, thisClauseDepth + 1);
 				}
 			}
-			
-			++globalDepth;
-
+						
 			for (var pi = 0; pi < clause.production.length; ++pi) {
 
 				// if we swtich to a new rule, reset the 
