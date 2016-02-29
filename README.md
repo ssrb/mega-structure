@@ -31,11 +31,11 @@ A similar project is called [Eisenscript](https://github.com/after12am/eisenscri
 * **x [float]**: [float] units translation along the X axis;
 * **y [float]**: as above;
 * **z [float]**: as above;
-* **rx [float]**: [float] degrees rotation about an axis colinear to X going through (0, 0.5, 0.5);
+* **rx [float]**: [float] degrees rotation about an axis colinear to X going through local coordinate (0, 0.5, 0.5);
 * **ry [float]**: as above;
 * **rz [float]**: as above;
-* **s [float]**: scale by [float] along the 3 axis;
-* **s [f1] [f2] [f3]**: scale by [f1](respectively [f2], [f3]) along the X (respectively Y, Z) axis;
+* **s [float]**: uniformely scale by [float] along the 3 axis;
+* **s [f1] [f2] [f3]**: scale by [f1] (respectively [f2], [f3]) along the X (respectively Y, Z) axis;
 * **m [f1] ... [f9]**: 3x3 generic matrix transformation;
 * **fx**: X axis mirror (flip sign of the frame x coordinates);
 * **fy**: as above;
@@ -46,6 +46,6 @@ A similar project is called [Eisenscript](https://github.com/after12am/eisenscri
 * **h / hue [float]**: add [float] degrees to the current color hue. [0-360] normalized;
 * **sat [float]**: multiply the current color saturation by [float]. [0-1] clamped;
 * **b / brightness [float]**: multiply the current color brightness (HSV value) by [float]. [0-1] clamped;
-* **a / alpha [float]**: multiply the current color alphaby [float]. [0-1] clamped;
+* **a / alpha [float]**: multiply the current color alpha by [float]. [0-1] clamped;
 * **color [color]**: set the current color to [color]
 
