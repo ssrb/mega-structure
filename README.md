@@ -35,7 +35,7 @@ A similar project is called [Eisenscript](https://github.com/after12am/eisenscri
 * **ry [float]**: as above;
 * **rz [float]**: as above;
 * **s [float]**: uniformely scale by [float] along the 3 axis;
-* **s [f1] [f2] [f3]**: scale by [f1] (respectively [f2], [f3]) along the X (respectively Y, Z) axis;
+* **s [f1] [f2] [f3]**: scale along the X by [f1], along Y by [f2], along Z by [f3];
 * **m [f1] ... [f9]**: 3x3 generic matrix transformation;
 * **fx**: X axis mirror (flip sign of the frame x coordinates);
 * **fy**: as above;
