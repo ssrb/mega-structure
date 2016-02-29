@@ -15,7 +15,7 @@ A similar project is called [Eisenscript](https://github.com/after12am/eisenscri
 * **set maxdepth [integer]**: stop as soon as a generation path is [integer] long;
 * **set maxobjects [integer]**: stop as soon as [integer] objects have been created;
 * **set minsize/maxsize [float]**: break a generation path when the local coordinate frame diagonal is below/above [float] units;
-* **set seed [integer]**: set the PRNG seed used to choose between rules;
+* **set seed [integer]**: seed the PRNG used to choose between rules;
 * **set background [color]**: self-explanatory
 
 #### Rule modifiers
