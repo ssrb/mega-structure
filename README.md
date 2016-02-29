@@ -8,72 +8,44 @@ The [Structure Synth](http://structuresynth.sourceforge.net) application provide
 
 A similar project is called [Eisenscript](https://github.com/after12am/eisenscript).
 
-## Eisenscript syntax
+### Eisenscript syntax
 
-### Termination criteria
+#### Termination criteria
 
-* **set maxdepth [integer]**
-Breaks after [integer] iterations (generations). This will also serve as a upper recursion limit for all rules.
-* **set maxobjects [integer]**
-After [integer] objects have been created, the construction is terminated.
-* **set minsize [float]**
-Allows you to specify how large or small a given object can be before terminating. The 'size' parameter refers to the length of the diagonal of a unit cube in the current local state. The initial coordinate frame goes from (0,0,0) to (1,1,1) and hence has a diagonal length of sqrt(3)~1.7). It is possible to specify both a mix and a min size. The termination criteria only stops the current branch - if other branches are still within a valid range, the will be continued. More info...
-set maxsize [float]
-See above.
-Other
+* **set maxdepth [integer]**: stop when any generation path is [integer] long;
+* **set maxobjects [integer]**: stop once [integer] objects have been created;
+* **set minsize/maxsize [float]**: stop once a shape basis diagonal is below/above [float] units;
+* **set seed [integer]**: set the PRNG seed used to choose between rules;
+* **set background [color]**: self-explanatory
 
-* **set seed [integer]**
-Allows you to set the random seed. This makes it possible to reproduce creations.
-* **set seed initial**
-This allows you to set the seed to its initial value (the value specified in the seed box). Notice that each rule call branch maintains its own sequence of random numbers. This makes it possible to generate the same set of random numbers as used earlier, making it possible to combine randomness with self-similarity. More info.
-* **set background [color]**
-Allows you to set the background color. Colors are specified as text-strings parsed using Qt's color parsing, allowing for standard HTML RGB specifications (e.g. #F00 or #FF0000), but also SVG keyword names (e.g. red or even lightgoldenrodyellow).
-Rule modifiers
+#### Rule modifiers
 
-* **md / maxdepth [integer]**
-Rule Retirement.Sets the maximum recursive for the rule. The rule would not execute any actions after this limit has been reached.
-* **md / maxdepth [integer] > [rulename]**
-Rule Retirement with substitution.Sets the maximum recursive for the rule. After this limit has been reached [rulename] will be executed instead this rule.
-* **w / weight [float]**
-Ambiguous rules.If several rules are defined with the same name, a random definition is chosen according to the weight specified here. If no weight is specified, the default weight of 1 is used.
-Transformations
+* **md / maxdepth [integer]**: stop if the current generation path includes [integer] call to that rule;
+* **md / maxdepth [integer] > [rulename]**: same as above, failover rule [rulename] once the limit is reached;
+* **w / weight [float]**: how likely the rule is going to be selected in case multiple rules have the same name. Default weight is 1.
 
-### Geometrical transformations
+#### Transformations
 
-* **x [float]**
-X axis translation. The float argument is the offset measured in units of the local coordinate system.
-* **y [float]**
-Y axis translation. As above.
-* **z [float]**
-Z axis translation. As above.
-* **rx [float]**
-Rotation about the x axis. The 'float' argument is the angle specified in degrees. The rotation axis is centered at the unit cube in the local coordinate system: that is the rotation axis contains the line segment from (0, 0.5, 0.5) -> (1, 0.5, 0.5).
-* **ry [float]**
-Rotation about the y axis. As above.
-* **rz [float]**
-Rotation about the z axis. As above.
-* **s [float]**
-Resizes the local coordinate system. Notice that the center for the resize is located at the center of the unit cube in the local system (at (0.5,0.5,0.5)
-* **s [f1] [f2] [f3]**
-Resizes the local coordinate system. As above but with separate scale for each dimension.
-* **m [f1] ... [f9]**
-Applies the specified 3x3 rotation matrix to the transformation matrix for the current state. About the argument order: [f1],[f2],[f3] defines the first row of the matrix.
-* **fx**
-Mirrors the local coordinate system about the x-axis. As above the mirroring planes is centered at the cube.
-* **fy**
-Mirrors the local coordinate system about the y-axis.
-* **fz**
-Mirrors the local coordinate system about the z-axis.
+##### Geometric transformations
 
-### Color space transformations
+* **x [float]**: [float] units translation along the X axis;
+* **y [float]**: as above;
+* **z [float]**: as above;
+* **rx [float]**: [float] degrees rotation about an axis colinear to X going through (0, 0.5, 0.5);
+* **ry [float]**: as above;
+* **rz [float]**: as above;
+* **s [float]**: scale by [float] along the 3 axis;
+* **s [f1] [f2] [f3]**: scale by [f1](respectively [f2], [f3]) along the X (respectively Y, Z) axis;
+* **m [f1] ... [f9]**: 3x3 generic matrix transformation;
+* **fx**: X axis mirror (flip sign of the frame x coordinates);
+* **fy**: as above;
+* **fz**: as above;
 
-* **h / hue [float]**
-Adds the 'float' value to the hue color parameter for the current state. Hues are measured from 0 to 360 and wraps cyclicly - i.e. a hue of 400 is equal to a hue of 40.
-* **sat [float]**
-Multiplies the 'float' value with the saturation color parameter for the current state. Saturation is measured from 0 to 1 and is clamped to this interval (i.e. values larger then 1 are set to 1).
-* **b / brightness [float]**
-Multiples the 'float' value with the brightness color parameter for the current state. Brightness is measured from 0 to 1 and is clamped to this interval. Notice that parameter is sometimes called 'V' or 'Value' (and the color space is often refered to as HSV).
-* **a / alpha [float]**
-Multiplies the 'float' value with the alpha color parameter for the current state. Alpha is measured from 0 to 1 and is clamped to this interval. An alpha value of zero is completely transparant, and an alpha value of one is completely opaque.
-* **color [color]**
-This commands sets the color to an absolut color (most other transformations are relative modifications on the current state). Colors are specified as text-strings parsed using Qt's color parsing, allowing for standard HTML RGB specifications (e.g. #F00 or #FF0000), but also SVG keyword names (e.g. red or even lightgoldenrodyellow)
+##### Color space transformations
+
+* **h / hue [float]**: add [float] degrees to the current color hue. [0-360] normalized;
+* **sat [float]**: multiply the current color saturation by [float]. [0-1] clamped;
+* **b / brightness [float]**: multiply the current color brightness (HSV value) by [float]. [0-1] clamped;
+* **a / alpha [float]**: multiply the current color alphaby [float]. [0-1] clamped;
+* **color [color]**: set the current color to [color]
+
