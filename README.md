@@ -43,9 +43,9 @@ A similar project is called [Eisenscript](https://github.com/after12am/eisenscri
 
 ##### Color space transformations
 
-* **h / hue [float]**: add [float] degrees to the current color hue. [0-360] normalized;
-* **sat [float]**: multiply the current color saturation by [float]. [0-1] clamped;
-* **b / brightness [float]**: multiply the current color brightness (HSV value) by [float]. [0-1] clamped;
-* **a / alpha [float]**: multiply the current color alpha by [float]. [0-1] clamped;
+* **h / hue [float]**: add [float] degrees to the current color hue. Result is [0-360] normalized;
+* **sat [float]**: multiply the current color saturation by [float]. Result is [0-1] clamped;
+* **b / brightness [float]**: multiply the current color brightness (HSV value) by [float]. Result is [0-1] clamped;
+* **a / alpha [float]**: multiply the current color alpha by [float]. Result is [0-1] clamped;
 * **color [color]**: set the current color to [color]
 
