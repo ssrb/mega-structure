@@ -29,6 +29,7 @@
 var eisenscript = require('./eisen-script');
 var glmat = require('./bower_components/gl-matrix/dist/gl-matrix-min.js');
 var tinycolor = require('./bower_components/tinycolor/tinycolor.js');
+var seedrandom = require('./bower_components/seedrandom/seedrandom.min.js');
 
 import ShapeInstance = require('./structure');
 import collections = require('./node_modules/typescript-collections/collections');
@@ -112,6 +113,11 @@ interface MinNode extends ASTNode {
 	min: number;
 }
 
+interface SeedNode extends ASTNode {
+	seed: number;
+}
+
+
 interface SynthFrame {
 	rule: string;
 	globalDepth: number;
@@ -140,6 +146,16 @@ class Synthesizer {
 	public constructor(script : string) {
 		this.ast = <ASTNode[]>eisenscript.parse(script);
 		this.index = Synthesizer.indexRules(this.ast);
+
+		this.background = tinycolor("black").toHexString();
+
+		// Let them crash their browser if they're keen.
+		this.maxObjects = Infinity;
+		this.maxDepth = Infinity;
+		this.maxSize = Infinity;
+		this.minSize = 0;
+
+		this.prng = seedrandom();
 	}
 
 	private static indexRules(ast: ASTNode[]): collections.Dictionary<string, [number, DefStatement[]]> {		
@@ -166,7 +182,7 @@ class Synthesizer {
 
 	private pickClause(rule: string): DefStatement {
 		var wclauses = this.index.getValue(rule);
-		var guess = wclauses[0] * Math.random();
+		var guess = wclauses[0] * this.prng();
 		for (var ci = 0; ci < wclauses[1].length; ++ci) {
 			var clause = wclauses[1][ci];
 			guess -= clause.weight;
@@ -177,16 +193,6 @@ class Synthesizer {
 	}
 
 	public synthesize(): ShapeInstance[] {
-
-		// TODO: seed RNG ?
-
-		this.background = tinycolor("black").toHexString();
-
-		// Let them crash their browser if they're keen.
-		this.maxObjects = Infinity;
-		this.maxDepth = Infinity;
-		this.maxSize = Infinity;
-		this.minSize = 0;
 
 		var shapes = new Array<ShapeInstance>();
 				
@@ -209,6 +215,9 @@ class Synthesizer {
 					break;
 				case "masize":
 					this.maxSize = (<MaxNode>this.ast[si]).max;
+					break;
+				case "seed":
+					this.prng = seedrandom((<SeedNode>this.ast[si]).seed);
 					break;
 			}
 		}
@@ -411,6 +420,7 @@ class Synthesizer {
 	private maxSize: number;
 	private minSize: number;
 	private index: collections.Dictionary<string, [number, DefStatement[]]>;
+	private prng: prng;
 	public background: string;
 }
 export = Synthesizer;

@@ -263,7 +263,10 @@ Naxsize "maxsize"
     }
     
 Seed "seed"
-    = SeedToken _ (Integer / "initial")
+    = SeedToken _? seed:Integer {
+        return  {type: "seed", seed};
+    }
+    / SeedToken _? "initial" // TODO
 
 Background "background"
     = BackgroundToken _? color:Color {
