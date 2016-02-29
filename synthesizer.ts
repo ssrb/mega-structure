@@ -46,6 +46,7 @@ interface DefStatement extends ASTNode {
 	maxdepth: number;
 	failover: string;
 	production: InvocStatement[];
+	id: number;
 }
 
 interface InvocStatement extends ASTNode {
@@ -113,8 +114,8 @@ interface MinNode extends ASTNode {
 
 interface SynthFrame {
 	rule: string;
-	globaldepth: number;
-	ruledepth: number;
+	globalDepth: number;
+	clauseDepthMap: collections.Dictionary<number, number>;
 	geospace: Float32Array;
 	colorspace: ColorFormats.HSVA;
 }
@@ -221,7 +222,7 @@ class Synthesizer {
 	
 		var queue = new collections.Queue<SynthFrame>();
 
-		this.synthProduction(prod, 0, 0, glmat.mat4.create(), tinycolor("RED").toHsv(), queue, shapes);
+		this.synthProduction(prod, 0, new collections.Dictionary<number, number>(), glmat.mat4.create(), tinycolor("RED").toHsv(), queue, shapes);
 		
 		while (!queue.isEmpty()) {
 
@@ -232,36 +233,58 @@ class Synthesizer {
 
 			// TODO: Report progress here
 
-			var { rule, globaldepth, ruledepth, geospace, colorspace } = queue.dequeue();
+			var { rule, globalDepth, clauseDepthMap, geospace, colorspace } = queue.dequeue();
 
-			if (globaldepth >= this.maxDepth) {
+			if (globalDepth >= this.maxDepth) {
 				continue;
 			}
 
 			var clause = this.pickClause(rule);
 
-			if (clause.maxdepth >= 0 && ruledepth >= clause.maxdepth) {
-				if (clause.failover) {
-					queue.enqueue({ rule: clause.failover, globaldepth: globaldepth + 1, ruledepth: 0, geospace, colorspace });
-				}
-				continue;
-			}
+			var thisClauseDepth = 0;
 
-			++globaldepth;
+			var clauseDepthMapCopy = new collections.Dictionary<number, number>();
+			clauseDepthMap.forEach(function(key: number, value: number) {
+				clauseDepthMapCopy.setValue(key, value);
+			});
+
+			if (clause.maxdepth >= 0) {
+
+				thisClauseDepth = clauseDepthMapCopy.getValue(clause.id);
+				
+				if (undefined == thisClauseDepth) {
+					thisClauseDepth = 0;
+				}
+
+				if (thisClauseDepth >= clause.maxdepth) {
+					if (clause.failover) {						
+						queue.enqueue({ rule: clause.failover, 
+							globalDepth: globalDepth + 1, 
+							clauseDepthMap: clauseDepthMapCopy, 
+							geospace, colorspace 
+						});
+					}
+					continue;
+				} else {
+					clauseDepthMapCopy.setValue(clause.id, thisClauseDepth + 1);
+				}
+			}
+			
+			++globalDepth;
 
 			for (var pi = 0; pi < clause.production.length; ++pi) {
 
 				// if we swtich to a new rule, reset the 
 				var samerule = rule == clause.production[pi].next.name;
 
-				this.synthProduction(clause.production[pi], globaldepth, samerule ? ruledepth+1 : 0, geospace, colorspace, queue, shapes);
+				this.synthProduction(clause.production[pi], globalDepth, clauseDepthMapCopy, geospace, colorspace, queue, shapes);
 			}
 		}
 	}
 
 	private synthProduction(prod: InvocStatement,
-							globaldepth: number,
-							ruledepth: number, 
+							globalDepth: number,
+							clauseDepthMap: collections.Dictionary<number, number>, 
 							geospace: Float32Array, 
 							colorspace: ColorFormats.HSVA, 
 							queue: collections.Queue<SynthFrame>, 
@@ -288,7 +311,7 @@ class Synthesizer {
 					glmat.vec4.transformMat4(diag, diag, childGeospaces[mi]);
 					var size = glmat.vec4.length(diag);
 					if (this.minSize <= size && size <= this.maxSize) {
-						queue.enqueue({ rule: prod.next.name, globaldepth, ruledepth, geospace: childGeospaces[mi], colorspace: childColorspaces[mi] });
+						queue.enqueue({ rule: prod.next.name, globalDepth, clauseDepthMap, geospace: childGeospaces[mi], colorspace: childColorspaces[mi] });
 					}
 				}
 				break;
