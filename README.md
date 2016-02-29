@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/ssrb/mega-structure.png)](https://travis-ci.org/ssrb/mega-structure)
 
-Mega Structure is a structure synthesizer for the web based on [Mikael Hvidtfeldt](http://hvidtfeldts.net)'s eisenscript language.
+mega-structure is a structure synthesizer for the web based on [Mikael Hvidtfeldt](http://hvidtfeldts.net)'s eisenscript language.
 
 The [Structure Synth](http://structuresynth.sourceforge.net) application provides the reference implementation for the language.
 
