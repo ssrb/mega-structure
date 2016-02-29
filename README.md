@@ -20,7 +20,7 @@ A similar project is called [Eisenscript](https://github.com/after12am/eisenscri
 
 #### Rule modifiers
 
-* **md / maxdepth [integer]**: stop if the current generation path includes [integer] call to that rule;
+* **md / maxdepth [integer]**: break a generation path if it includes [integer] call to that rule;
 * **md / maxdepth [integer] > [rulename]**: same as above, failover rule [rulename] once the limit is reached;
 * **w / weight [float]**: how likely the rule is going to be selected in case multiple rules have the same name. Default weight is 1.
 
