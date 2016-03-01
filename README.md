@@ -4,11 +4,11 @@
 
 mega-structure is a structure synthesizer for the web based on [Mikael Hvidtfeldt](http://hvidtfeldts.net)'s eisenscript language.
 
-![Screenshot 1](https://raw.githubusercontent.com/ssrb/mega-structure/master/screenshots/hexstruct.png)
+![Screenshot 1](https://raw.githubusercontent.com/ssrb/mega-structure/master/screenshoots/hexstruct.png)
 
-![Screenshot 2](https://raw.githubusercontent.com/ssrb/mega-structure/master/screenshots/minmax.png)
+![Screenshot 2](https://raw.githubusercontent.com/ssrb/mega-structure/master/screenshoots/minmax.png)
 
-![Screenshot 3](https://raw.githubusercontent.com/ssrb/mega-structure/master/screenshots/mondrian.png)
+![Screenshot 3](https://raw.githubusercontent.com/ssrb/mega-structure/master/screenshoots/mondrian.png)
 
 The [Structure Synth](http://structuresynth.sourceforge.net) application provides the reference implementation for the language.
 
