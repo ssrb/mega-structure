@@ -7,6 +7,9 @@
 
     <title>mega-structure</title>
 
+    <!-- jQuery -->
+	<script type="text/javascript" src="bower_components/jquery/dist/jquery.min.js"></script>
+
 	<!-- Bootstrap CSS layout -->
 	<link rel="stylesheet" type="text/css"  href="bower_components/bootstrap/dist/css/bootstrap.css"/>
 
@@ -34,9 +37,14 @@
 			border: 0px;
 		}
 
-		.CodeMirror {
-		  height: auto;
+		.CodeMirror {		 
 		  border: 1px solid gray;
+		}
+
+		.vcenter {
+		    display: inline-block;
+		    vertical-align: middle;
+		    float: none;
 		}
 	</style>
 
@@ -44,36 +52,49 @@
 
 <body>
 
-<a href="https://github.com/ssrb/mega-structure"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/652c5b9acfaddf3a9c326fa6bde407b87f7be0f4/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6f72616e67655f6666373630302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_orange_ff7600.png"></a>
-    <script src="bundle.js"></script>
-</body>
-</html>
 
+<div class="container-fluid" ng-controller="CodemirrorCtrl">
 
- <pre id="header" class="title">                                      _                   _                  
+	<div id="header" class="row">
+
+		<form class="col-lg-4">
+			
+			<div class="form-group"></div>
+
+			<div class="form-group">
+				<button ng-click="synthetize()" type="button" class="btn btn-success">Synthesize !</button>
+				<button ng-click="resetViewport()" type="button" class="btn">Reset viewport</button>
+				<button ng-click="turntable()" type="button" class="btn">Toggle turntable</button>
+			</div>
+
+			<div class="form-group">
+				<label for="examples">Example</label>
+				<select id="examples" ng-model="example" ng-options="e for e in examples" ng-change="exampleChanged()"></select>
+			</div>	
+
+		</form>
+
+	  	<pre class="title col-lg-8">                                      _                   _                  
  _ __ ___   ___  __ _  __ _       ___| |_ _ __ _   _  ___| |_ _   _ _ __ ___ 
 | '_ ` _ \ / _ \/ _` |/ _` |_____/ __| __| '__| | | |/ __| __| | | | '__/ _ \
 | | | | | |  __/ (_| | (_| |_____\__ \ |_| |  | |_| | (__| |_| |_| | | |  __/
 |_| |_| |_|\___|\__, |\__,_|     |___/\__|_|   \__,_|\___|\__|\__,_|_|  \___| beta
-(c) 2016 SSRB   |___/ 
-</pre>
+(c) 2016 SSRB   |___/ </pre>
+
+	</div>
+
+	<div class="row">
+		<div class="col-lg-4">     	      	  		  		
+			<ui-codemirror ui-codemirror="cmOption" ng-model="cmModel" id="structure-code"></ui-codemirror>				
+		</div>
+    	<div class="col-lg-8" id="structure-view"></div>
+  	</div>
+
+</div>
+
+<a href="https://github.com/ssrb/mega-structure"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/652c5b9acfaddf3a9c326fa6bde407b87f7be0f4/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6f72616e67655f6666373630302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_orange_ff7600.png"></a>
 
 <script src="bundle.js"></script>
-
-<div class="container-fluid">
-  <div class="row-fluid">
-    <div class="col-lg-6">     	
-      	<section ng-controller="CodemirrorCtrl">
-      		Examples : <select ng-model="example" ng-options="e for e in examples" ng-change="exampleChanged()"></select>
-      		<form ng-submit="synthetize()">
-	      		<ui-codemirror ui-codemirror="cmOption" ng-model="cmModel"></ui-codemirror>
-		        <input class="btn-primary" type="submit" value="Synthesize !">
-	      	</form>				
-		</section>
-    </div>
-    <div class="col-lg-6" id="structure-view"></div>
-  </div>
-</div>
 
 </body>
 </html>

@@ -28,6 +28,7 @@
 ///<reference path="typings/tsd.d.ts"/>
 var glmat = require('./bower_components/gl-matrix/dist/gl-matrix-min.js');
 var tinycolor = require('./bower_components/tinycolor/tinycolor.js');
+var turntable = true; 
 
 import EisenScripts = require('./examples-generated');
 import ShapeInstance = require('./structure');
@@ -83,7 +84,6 @@ var renderer: THREE.WebGLRenderer;
 var mesh: THREE.Mesh;
 var camera: THREE.PerspectiveCamera;
 var controls: THREE.OrbitControls;	
-var theta: number;
 
 var app: ng.IModule = angular.module('MegaStructure.App', ['ui.codemirror']);
 
@@ -102,6 +102,30 @@ app.controller('CodemirrorCtrl', ['$scope', function($scope) {
 		theme: 'twilight'
 	};
 
+	$scope.turntable = function() {
+		turntable = !turntable;
+	}
+
+	$scope.resetViewport = function() {
+		var bbox = mesh.geometry.boundingBox;
+		var diag = new THREE.Vector3();
+		diag.subVectors(bbox.max, bbox.min);
+		
+		camera.position.x = 0;
+		camera.position.y = 0;
+		camera.position.z = Math.max(diag.x, diag.y) / Math.tan(0.5 * camera.fov * Math.PI / 180);
+
+		camera.rotation.x = 0;
+		camera.rotation.y = 0;
+		camera.rotation.z = 0;
+				
+		controls.target.set(0, 0, 0);			
+		controls.update();
+
+		mesh.rotation.x = 0;
+		mesh.rotation.y = 0;		
+	}
+
 	$scope.synthetize = function() {
 		var myWorker = new Worker("synthesizer-webworker.js");
 		myWorker.onmessage = function(e) {
@@ -109,25 +133,9 @@ app.controller('CodemirrorCtrl', ['$scope', function($scope) {
 			mesh.geometry = CreateGeometry(e.data.structure);			
 			mesh.translateOnAxis(mesh.geometry.center(), mesh.geometry.center().length());
 
-			var bbox = mesh.geometry.boundingBox;
-			var diag = new THREE.Vector3();
-			diag.subVectors(bbox.max, bbox.min);
-			
-			camera.position.x = 0;
-			camera.position.y = 0;
-			camera.position.z = Math.max(diag.x, diag.y) / Math.tan(0.5 * camera.fov * Math.PI / 180);
+			$scope.resetViewport();
 
-			camera.rotation.x = 0;
-			camera.rotation.y = 0;
-			camera.rotation.z = 0;
-					
-			controls.target.set(0, 0, 0);			
-			controls.update();
-
-			theta = 0;
-			
 			renderer.setClearColor(new THREE.Color(e.data.background));
-			document.body.style.backgroundColor = e.data.background;
 			myWorker.terminate();
 		}
 		myWorker.postMessage($scope.cmModel);
@@ -154,6 +162,8 @@ window.onload = () => {
 		renderer.setSize(w, h);
 		camera.aspect = w / h;
 		camera.updateProjectionMatrix();
+
+		$(".CodeMirror").height(h + "px");
 	}
 	doResize();
 	window.addEventListener('resize', doResize);
@@ -199,17 +209,17 @@ window.onload = () => {
 	controls.target.set(0, 0, 0);
 
 	var lastTime = new Date().getTime();
-	theta = 0;
 	function animate() {
 
 		var timeNow = new Date().getTime();
 
 		// "Turntable"
-		var dt = (timeNow - lastTime) / (60 * 1000);
-		theta += 2 * Math.PI * 1 * dt
-				
-		mesh.rotation.x = theta;
-		mesh.rotation.y = theta;
+		if (turntable) {
+			var dt = (timeNow - lastTime) / (60 * 1000);
+			var dtheta = 2 * Math.PI * 1 * dt				
+			mesh.rotation.x += dtheta;
+			mesh.rotation.y += dtheta;
+		}
 		
 		renderer.render(scene, camera);
 
