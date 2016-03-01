@@ -54,19 +54,25 @@ function CreateGeometry(structure: ShapeInstance[]): THREE.Geometry {
 
 	// TODO: do all that in the web worker and on the GPU !
 	for (var si = 0; si < structure.length; ++si) {
-		for (var vi = 0; vi < 8; ++vi) {
-			var vert = [0, 0, 0, 0];
-			glmat.vec4.transformMat4(vert, [vertices[3 * vi] - 0.5, vertices[3 * vi + 1] - 0.5, vertices[3 * vi + 2] - 0.5, 1], structure[si].geospace);
-			geometry.vertices.push(new THREE.Vector3(vert[0], vert[1], vert[2]));
-		}
-		var tris = [];
-		for (var fi = 0; fi < 12; ++fi) {
-			var face = new THREE.Face3(triangles[3 * fi] + si * 8, triangles[3 * fi + 1] + si * 8, triangles[3 * fi + 2] + si * 8);
-			var rgb = tinycolor(structure[si].colorspace).toRgb();
-			face.color = new THREE.Color(rgb.r / 255, rgb.g / 255, rgb.b / 255);
-			geometry.faces.push(
-				face
-			);
+		switch (structure[si].shape) {
+			case "box":
+				for (var vi = 0; vi < 8; ++vi) {
+					var vert = [0, 0, 0, 0];
+					glmat.vec4.transformMat4(vert, [vertices[3 * vi] - 0.5, vertices[3 * vi + 1] - 0.5, vertices[3 * vi + 2] - 0.5, 1], structure[si].geospace);
+					geometry.vertices.push(new THREE.Vector3(vert[0], vert[1], vert[2]));
+				}
+				var tris = [];
+				for (var fi = 0; fi < 12; ++fi) {
+					var face = new THREE.Face3(triangles[3 * fi] + si * 8, triangles[3 * fi + 1] + si * 8, triangles[3 * fi + 2] + si * 8);
+					var rgb = tinycolor(structure[si].colorspace).toRgb();
+					face.color = new THREE.Color(rgb.r / 255, rgb.g / 255, rgb.b / 255);
+					geometry.faces.push(
+						face
+					);
+				}
+				break;
+			case "sphere":
+				break;
 		}
 	}
 
@@ -75,6 +81,9 @@ function CreateGeometry(structure: ShapeInstance[]): THREE.Geometry {
 
 var renderer: THREE.WebGLRenderer;
 var mesh: THREE.Mesh;
+var camera: THREE.PerspectiveCamera;
+var controls: THREE.OrbitControls;	
+var theta: number;
 
 var app: ng.IModule = angular.module('MegaStructure.App', ['ui.codemirror']);
 
@@ -97,7 +106,26 @@ app.controller('CodemirrorCtrl', ['$scope', function($scope) {
 		var myWorker = new Worker("synthesizer-webworker.js");
 		myWorker.onmessage = function(e) {
 			$scope.structure = e.data;
-			mesh.geometry = CreateGeometry(e.data.structure);
+			mesh.geometry = CreateGeometry(e.data.structure);			
+			mesh.translateOnAxis(mesh.geometry.center(), mesh.geometry.center().length());
+
+			var bbox = mesh.geometry.boundingBox;
+			var diag = new THREE.Vector3();
+			diag.subVectors(bbox.max, bbox.min);
+			
+			camera.position.x = 0;
+			camera.position.y = 0;
+			camera.position.z = Math.max(diag.x, diag.y) / Math.tan(0.5 * camera.fov * Math.PI / 180);
+
+			camera.rotation.x = 0;
+			camera.rotation.y = 0;
+			camera.rotation.z = 0;
+					
+			controls.target.set(0, 0, 0);			
+			controls.update();
+
+			theta = 0;
+			
 			renderer.setClearColor(new THREE.Color(e.data.background));
 			document.body.style.backgroundColor = e.data.background;
 			myWorker.terminate();
@@ -116,7 +144,7 @@ window.onload = () => {
 	renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 	renderer.setPixelRatio(window.devicePixelRatio);
 
-	var camera = new THREE.PerspectiveCamera(75, 1, 0.1, 50);
+	camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
 	camera.position.z = 1.5;
 
 	function doResize(): void {
@@ -144,7 +172,7 @@ window.onload = () => {
 		});
 
 	mesh = new THREE.Mesh(
-			new THREE.BoxGeometry(1, 1, 1),
+			new THREE.BoxGeometry(0, 0, 0),
 			material
 		);
 
@@ -166,12 +194,12 @@ window.onload = () => {
 	scene.add(lights[1]);
 	scene.add(lights[2]);
 	
-	var controls = new THREE.OrbitControls(camera, view);
+	controls = new THREE.OrbitControls(camera, document.getElementById("structure-view"));	
+	controls.enableKeys = false;
 	controls.target.set(0, 0, 0);
-	controls.update();
 
 	var lastTime = new Date().getTime();
-	var theta = 0;
+	theta = 0;
 	function animate() {
 
 		var timeNow = new Date().getTime();
@@ -179,12 +207,10 @@ window.onload = () => {
 		// "Turntable"
 		var dt = (timeNow - lastTime) / (60 * 1000);
 		theta += 2 * Math.PI * 1 * dt
-		
-		//mesh.translateOnAxis(mesh.geometry.center(), mesh.geometry.center().length());
-
+				
 		mesh.rotation.x = theta;
 		mesh.rotation.y = theta;
-
+		
 		renderer.render(scene, camera);
 
 		requestAnimationFrame(animate);
