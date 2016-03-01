@@ -81,7 +81,7 @@ RuleDef "definition"
             }
         }
     
-        return {type: "def", rule, weight, failover, maxdepth, production: optionalList(production), id: clauseid++}
+        return {type: "def", rule: rule, weight: weight, failover: failover, maxdepth: maxdepth, production: optionalList(production), id: clauseid++}
     }
     
 RuleInvocSeq "production"
@@ -94,7 +94,7 @@ RuleAttributes "attributes"
 
 MaxDepthAttribute "maxdepth"
     = MaxDepthToken _ maxdepth:UnsignedIntegerLitteral failover:(_? Failover)? {
-        return {type: "md", maxdepth, failover: extractOptional(failover, 1)};
+        return {type: "md", maxdepth: maxdepth, failover: extractOptional(failover, 1)};
     }
 
 Failover "failover"
@@ -104,7 +104,7 @@ Failover "failover"
     
 WeightAttribute "weight modifier"
     = WeightToken _ weight:Float {
-        return {type: "weight" , weight};
+        return {type: "weight" , weight: weight};
     }
     
 RuleName "name"
@@ -114,14 +114,14 @@ RuleName "name"
 
 RuleInvoc "invocation"
     = transformations:Transformation* _? next:Next {
-        return {type: "invoc", transformations, next}
+        return {type: "invoc", transformations: transformations, next: next}
     }
 
 Next = name:RuleName {
-        return {type: "call", name}
+        return {type: "call", name: name}
     }
     / name:Shape {
-        return {type: "shape", name}
+        return {type: "shape", name: name}
     }
 
 Transformation "transformation"
@@ -161,17 +161,17 @@ Tz "translate z"
     
 Rx "rotate x"
     = RxToken _ theta:ArithExpression {
-        return {type: "rot", axis: 0, theta}
+        return {type: "rot", axis: 0, theta: theta}
     }
     
 Ry "rotate y"
     = RyToken _ theta:ArithExpression {
-        return {type: "rot", axis: 1, theta}
+        return {type: "rot", axis: 1, theta: theta}
     }
     
 Rz "rotate z"
     = RzToken _ theta:ArithExpression {
-        return {type: "rot", axis: 2, theta}
+        return {type: "rot", axis: 2, theta: theta}
     }
 
 Scale "scale"
@@ -222,7 +222,7 @@ Alpha "alpha"
  
 SetColor "set color"
     =  ColorToken _ color:Color {
-        return  {type: "color", color};
+        return  {type: "color", color: color};
     }
 
 Blend "blend"
@@ -244,33 +244,33 @@ SetStatement "set statement"
 
 Maxdepth "maxdepth"
     = MaxDepthToken _? max:UnsignedIntegerLitteral {
-        return  {type: "maxdepth", max};
+        return  {type: "maxdepth", max: max};
     }
     
 MaxObjects "maxobjects"
     = MaxObjectsToken  _? max:UnsignedIntegerLitteral {
-        return  {type: "maxobjects", max};
+        return  {type: "maxobjects", max: max};
     }
 
 Minsize "minsize"
     = MinSizeToken _? min:Float {
-        return  {type: "minsize", min};
+        return  {type: "minsize", min: min};
     }
 
 Naxsize "maxsize"
     =  MaxSizeToken _? max:Float {
-        return  {type: "maxsize", max};
+        return  {type: "maxsize", max: max};
     }
     
 Seed "seed"
     = SeedToken _? seed:Integer {
-        return  {type: "seed", seed};
+        return  {type: "seed", seed: seed};
     }
     / SeedToken _? "initial" // TODO
 
 Background "background"
     = BackgroundToken _? color:Color {
-        return  {type: "background", color};
+        return  {type: "background", color: color};
     }
 
 // For structure-synth compat

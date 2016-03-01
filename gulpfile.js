@@ -85,13 +85,38 @@ gulp.task('.synth', function() {
         .pipe(gulp.dest('.'));
 });
 
+gulp.task('.ui.release', function() {
+    var bundler = browserify()
+        .add('./mega-structure.ts')
+        .plugin(tsify)
+        .transform('brfs')
+        .transform(uglify);
+    
+    return bundler.bundle()
+        .pipe(source('bundle.js'))
+        .pipe(gulp.dest('.'));
+});
+
+gulp.task('.synth.release', function() {
+    var bundler = browserify()
+        .add('./synthesizer-webworker.ts')
+        .add('./node_modules/typescript-collections/collections.ts')
+        .plugin(tsify)
+        .transform(uglify);
+    
+    return bundler.bundle()
+        .pipe(source('synthesizer-webworker.js'))
+        .pipe(gulp.dest('.'));
+});
+
+
 gulp.task('default', function(callback) {
     runSequence('.bower.install',
                 '.tsd.install',
                 '.peg',
                 '.examples',
-                '.ui',
-                '.synth',
+                '.ui.release',
+                '.synth.release',
                 callback);
 });
 

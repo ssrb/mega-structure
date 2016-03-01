@@ -28,7 +28,7 @@
 ///<reference path="typings/tsd.d.ts"/>
 var eisenscript = require('./eisen-script');
 var glmat = require('./bower_components/gl-matrix/dist/gl-matrix-min.js');
-var tinycolor = require('./bower_components/tinycolor/tinycolor.js');
+var tinycolor = require('./bower_components/tinycolor/dist/tinycolor-min.js');
 var seedrandom = require('./bower_components/seedrandom/seedrandom.min.js');
 
 import ShapeInstance = require('./structure');
