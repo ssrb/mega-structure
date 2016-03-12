@@ -279,10 +279,6 @@ class Synthesizer {
 			}
 						
 			for (var pi = 0; pi < clause.production.length; ++pi) {
-
-				// if we swtich to a new rule, reset the 
-				var samerule = rule == clause.production[pi].next.name;
-
 				this.synthProduction(clause.production[pi], globalDepth, clauseDepthMapCopy, geospace, colorspace, queue, shapes);
 			}
 		}
