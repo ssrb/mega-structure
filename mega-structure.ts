@@ -129,17 +129,29 @@ app.controller('CodemirrorCtrl', ['$scope', function($scope) {
 	$scope.synthetize = function() {
 		var myWorker = new Worker("synthesizer-webworker.js");
 		myWorker.onmessage = function(e) {
-			$scope.structure = e.data;
-			mesh.geometry = CreateGeometry(e.data.structure);			
-			mesh.translateOnAxis(mesh.geometry.center(), mesh.geometry.center().length());
 
-			$scope.resetViewport();
+			switch (e.data.type) {
+				case 'result':
+					mesh.geometry = CreateGeometry(e.data.structure);
+					mesh.translateOnAxis(mesh.geometry.center(), mesh.geometry.center().length());
 
-			renderer.setClearColor(new THREE.Color(e.data.background));
-			myWorker.terminate();
+					$scope.resetViewport();
+
+					renderer.setClearColor(new THREE.Color(e.data.background));
+					myWorker.terminate();
+					break;
+				case 'progress':
+					$scope.progress = e.data.nshape;
+					break;
+
+			}
+
+			$scope.$apply();
 		}
 		myWorker.postMessage($scope.cmModel);
 	}
+
+	$scope.progress = 0;
 
 	$scope.synthetize();
 

@@ -141,9 +141,13 @@ function normalizeAngle(angle: number, lower: number) {
 	return angle;
 }
 
+interface ProgressFunc {
+	(nshapes: number): void;
+}
+
 class Synthesizer {
 
-	public constructor(script : string) {
+	public constructor(script: string, progress: ProgressFunc) {
 		this.ast = <ASTNode[]>eisenscript.parse(script);
 		this.index = Synthesizer.indexRules(this.ast);
 
@@ -156,6 +160,7 @@ class Synthesizer {
 		this.minSize = 0;
 
 		this.prng = seedrandom();
+		this.progress = progress;
 	}
 
 	private static indexRules(ast: ASTNode[]): collections.Dictionary<string, [number, DefStatement[]]> {		
@@ -222,13 +227,15 @@ class Synthesizer {
 			}
 		}
 		
-		console.log("Generated %d shapes.", shapes.length);		
+		this.progress(shapes.length);
 		
 		return shapes;
 	}
 
 	private synthesizeOne(prod: InvocStatement, shapes: ShapeInstance[]) : void {
 	
+		var lastProgress = shapes.length;
+
 		var queue = new collections.Queue<SynthFrame>();
 
 		this.synthProduction(prod, 0, new collections.Dictionary<number, number>(), glmat.mat4.create(), tinycolor("RED").toHsv(), queue, shapes);
@@ -240,7 +247,10 @@ class Synthesizer {
 				break;
 			}
 
-			// TODO: Report progress here
+			if (shapes.length - lastProgress > 10) {
+				this.progress(shapes.length);
+			}
+			lastProgress = shapes.length;
 
 			var { rule, globalDepth, clauseDepthMap, geospace, colorspace } = queue.dequeue();
 
@@ -417,6 +427,7 @@ class Synthesizer {
 	private minSize: number;
 	private index: collections.Dictionary<string, [number, DefStatement[]]>;
 	private prng: prng;
+	private progress: ProgressFunc;
 	public background: string;
 }
 export = Synthesizer;

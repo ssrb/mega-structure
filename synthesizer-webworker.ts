@@ -31,11 +31,14 @@ onmessage = function(e) {
 
 	console.log('Synthesizing !');
 
-	var synth = new Synthesizer(e.data);
+	var worker = this;
+	var synth = new Synthesizer(e.data, function(nshape : number) {
+		worker.postMessage({ type: 'progress', nshape });
+	});
 	var structure = synth.synthesize();
 
 	console.log('Done. Posting result.');
 
-	this.postMessage({ structure, background: synth.background });
+	this.postMessage({ type: 'result', structure, background: synth.background });
 }
 
