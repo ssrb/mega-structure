@@ -77,7 +77,6 @@ gulp.task('.ui', function() {
 gulp.task('.synth', function() {
     var bundler = browserify({debug: true})
         .add('./synthesizer-webworker.ts')
-        .add('./node_modules/typescript-collections/collections.ts')
         .plugin(tsify)
     
     return bundler.bundle()
@@ -100,7 +99,6 @@ gulp.task('.ui.release', function() {
 gulp.task('.synth.release', function() {
     var bundler = browserify()
         .add('./synthesizer-webworker.ts')
-        .add('./node_modules/typescript-collections/collections.ts')
         .plugin(tsify)
         .transform(uglify);
     
