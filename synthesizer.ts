@@ -32,7 +32,7 @@ var tinycolor = require('./bower_components/tinycolor/dist/tinycolor-min.js');
 var seedrandom = require('./bower_components/seedrandom/seedrandom.min.js');
 
 import ShapeInstance = require('./structure');
-import collections = require('./node_modules/typescript-collections/collections');
+import collections = require('./node_modules/typescript-collections');
 
 debugger;
 enum Axis { X, Y, Z };
