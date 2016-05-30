@@ -30,7 +30,7 @@
     "gulp-util": "^3.0.7",
     "run-sequence": "^1.1.5",
     "tsify": "^0.13.2",
-    "typescript-collections": "github:basarat/typescript-collections#gh-pages",
+    "typescript-collections": "^1.1.2",
     "uglifyify": "^3.0.1",
     "vinyl-source-stream": "^1.1.0",
     "watchify": "^3.7.0"
