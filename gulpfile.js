@@ -4,7 +4,7 @@ var browserify = require('browserify');
 var watchify = require('watchify');
 var tsify = require('tsify');
 var uglify = require('uglifyify');
-var tsd = require('gulp-tsd');
+var typings = require('gulp-typings');
 var runSequence = require('run-sequence');
 var peg = require('gulp-peg');
 var gutil = require('gulp-util');
@@ -19,11 +19,8 @@ gulp.task('.bower.clean', function (cb) {
     del(['lib/'], cb);
 });
 
-gulp.task('.tsd.install', function (callback) {
-	tsd({
-        command: 'reinstall',
-        config: './tsd.json'
-    }, callback);
+gulp.task('.typings.install', function (callback) {
+    return gulp.src("./typings.json").pipe(typings());
 });
 
 gulp.task('.npm.clean', function (cb) {
@@ -110,7 +107,7 @@ gulp.task('.synth.release', function() {
 
 gulp.task('default', function(callback) {
     runSequence('.bower.install',
-                '.tsd.install',
+                '.typings.install',
                 '.peg',
                 '.examples',
                 '.ui.release',
