@@ -34,7 +34,6 @@ var seedrandom = require('./bower_components/seedrandom/seedrandom.min.js');
 import ShapeInstance = require('./structure');
 import collections = require('./node_modules/typescript-collections');
 
-debugger;
 enum Axis { X, Y, Z };
 
 interface ASTNode {
