@@ -28,8 +28,6 @@
 ///<reference path="typings/index.d.ts"/>
 var glmat = require('./bower_components/gl-matrix/dist/gl-matrix-min.js');
 var tinycolor = require('./bower_components/tinycolor/tinycolor.js');
-var turntable = true; 
-
 import EisenScripts = require('./examples-generated');
 import ShapeInstance = require('./structure');
 
@@ -80,110 +78,18 @@ function CreateGeometry(structure: ShapeInstance[]): THREE.Geometry {
 	return geometry;
 }
 
-var renderer: THREE.WebGLRenderer;
-var mesh: THREE.Mesh;
-var camera: THREE.PerspectiveCamera;
-var controls: THREE.OrbitControls;	
-
-var app: ng.IModule = angular.module('MegaStructure.App', ['ui.codemirror']);
-
-app.controller('CodemirrorCtrl', ['$scope', function($scope) {	
-	$scope.examples = Object.keys(EisenScripts);
-	$scope.example = 'frameinframe';
-	$scope.exampleChanged = function() {
-		$scope.cmModel = EisenScripts[$scope.example];
-	}
-	$scope.exampleChanged();
-
-	$scope.cmOption = {
-		lineNumbers: true,
-		matchBrackets: true,
-		mode: 'eisen-script',
-		theme: 'twilight'
-	};
-
-	$scope.turntable = function() {
-		turntable = !turntable;
-	}
-
-	$scope.resetViewport = function() {
-		var bbox = mesh.geometry.boundingBox;
-		var diag = new THREE.Vector3();
-		diag.subVectors(bbox.max, bbox.min);
+window.addEventListener('load', () => {
 		
-		camera.position.x = 0;
-		camera.position.y = 0;
-		camera.position.z = Math.max(diag.x, diag.y) / Math.tan(0.5 * camera.fov * Math.PI / 180);
-
-		camera.rotation.x = 0;
-		camera.rotation.y = 0;
-		camera.rotation.z = 0;
-				
-		controls.target.set(0, 0, 0);			
-		controls.update();
-
-		mesh.rotation.x = 0;
-		mesh.rotation.y = 0;		
-	}
-
-	$scope.synthetize = function() {
-		var myWorker = new Worker("synthesizer-webworker.js");
-		myWorker.onmessage = function(e) {
-
-			switch (e.data.type) {
-				case 'result':
-					mesh.geometry = CreateGeometry(e.data.structure);
-					mesh.translateOnAxis(mesh.geometry.center(), mesh.geometry.center().length());
-
-					$scope.resetViewport();
-
-					renderer.setClearColor(new THREE.Color(e.data.background));
-					myWorker.terminate();
-					break;
-				case 'progress':
-					$scope.progress = e.data.nshape;
-					break;
-
-			}
-
-			$scope.$apply();
-		}
-		myWorker.postMessage($scope.cmModel);
-	}
-
-	$scope.progress = 0;
-
-	$scope.synthetize();
-
-}]);
-
-window.onload = () => {
-
-	var view = document.getElementById("structure-view");
-
-	renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+	var renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 	renderer.setPixelRatio(window.devicePixelRatio);
 
-	camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+	var camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
 	camera.position.z = 1.5;
-
-	function doResize(): void {
-		var w = view.offsetWidth, h = window.innerHeight - document.getElementById("header").offsetHeight;
-		w *= 0.95;
-		h *= 0.95;
-		renderer.setSize(w, h);
-		camera.aspect = w / h;
-		camera.updateProjectionMatrix();
-
-		$(".CodeMirror").height(h + "px");
-	}
-	doResize();
-	window.addEventListener('resize', doResize);
-
+	
+	var view = document.getElementById("structure-view");	
 	view.appendChild(renderer.domElement);
 
 	var scene = new THREE.Scene();
-
 	scene.add(camera);
 
 	var material =
@@ -193,7 +99,7 @@ window.onload = () => {
 			shading: THREE.FlatShading
 		});
 
-	mesh = new THREE.Mesh(
+	var mesh = new THREE.Mesh(
 			new THREE.BoxGeometry(0, 0, 0),
 			material
 		);
@@ -216,16 +122,17 @@ window.onload = () => {
 	scene.add(lights[1]);
 	scene.add(lights[2]);
 	
-	controls = new THREE.OrbitControls(camera, document.getElementById("structure-view"));	
+	var controls = new THREE.OrbitControls(camera, document.getElementById("structure-view"));	
 	controls.enableKeys = false;
 	controls.target.set(0, 0, 0);
 
+	var turntable = true; 
+
 	var lastTime = new Date().getTime();
-	function animate() {
+	function animate() : void{
 
 		var timeNow = new Date().getTime();
-
-		// "Turntable"
+		
 		if (turntable) {
 			var dt = (timeNow - lastTime) / (60 * 1000);
 			var dtheta = 2 * Math.PI * 1 * dt				
@@ -240,5 +147,93 @@ window.onload = () => {
 		lastTime = timeNow;
 	}
 
-	animate();
-}
+	var resizeTimer;
+	function doResize() : void {
+		clearTimeout(resizeTimer);
+	  	resizeTimer = setTimeout(() => {
+		    var w = view.offsetWidth, h = window.innerHeight - document.getElementById("header").offsetHeight;
+			w *= 0.95;
+			h *= 0.95;
+			renderer.setSize(w, h);
+			camera.aspect = w / h;
+			camera.updateProjectionMatrix();
+
+			$(".CodeMirror").height(h + "px");			            
+	  	}, 100);
+	};
+	window.addEventListener('resize', doResize);
+
+	var app: ng.IModule = angular.module('MegaStructure.App', ['ui.codemirror']);
+
+	app.controller('CodemirrorCtrl', ['$scope', function($scope) {	
+		$scope.examples = Object.keys(EisenScripts);
+		$scope.example = 'frameinframe';
+		$scope.exampleChanged = function() {
+			$scope.cmModel = EisenScripts[$scope.example];
+		}
+		$scope.exampleChanged();
+
+		$scope.cmOption = {
+			lineNumbers: true,
+			matchBrackets: true,
+			mode: 'eisen-script',
+			theme: 'twilight'
+		};
+
+		$scope.turntable = function() {
+			turntable = !turntable;
+		}
+
+		$scope.resetViewport = function() {
+			var bbox = mesh.geometry.boundingBox;
+			var diag = new THREE.Vector3();
+			diag.subVectors(bbox.max, bbox.min);
+			
+			camera.position.x = 0;
+			camera.position.y = 0;
+			camera.position.z = Math.max(diag.x, diag.y) / Math.tan(0.5 * camera.fov * Math.PI / 180);
+
+			camera.rotation.x = 0;
+			camera.rotation.y = 0;
+			camera.rotation.z = 0;
+					
+			controls.target.set(0, 0, 0);			
+			controls.update();
+
+			mesh.rotation.x = 0;
+			mesh.rotation.y = 0;		
+		}
+
+		$scope.synthetize = function() {			
+			var myWorker = new Worker("synthesizer-webworker.js");
+			myWorker.onmessage = function(e) {
+
+				switch (e.data.type) {
+					case 'result':
+						mesh.geometry = CreateGeometry(e.data.structure);
+						mesh.translateOnAxis(mesh.geometry.center(), mesh.geometry.center().length());
+
+						$scope.resetViewport();
+
+						renderer.setClearColor(new THREE.Color(e.data.background));
+						myWorker.terminate();
+						break;
+					case 'progress':
+						$scope.progress = e.data.nshape;
+						break;
+
+				}
+
+				$scope.$apply();
+			}
+			myWorker.postMessage($scope.cmModel);
+		}
+
+		$scope.progress = 0;
+
+		$scope.synthetize();		
+	}]);
+		
+	requestAnimationFrame(animate);
+	doResize();
+});
