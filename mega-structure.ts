@@ -31,6 +31,8 @@ var tinycolor = require('./bower_components/tinycolor/tinycolor.js');
 import EisenScripts = require('./examples-generated');
 import ShapeInstance = require('./structure');
 
+var renderer : THREE.WebGLRenderer;
+
 function CreateGeometry(structure: ShapeInstance[]): THREE.Geometry {
 
 	var geometry = new THREE.Geometry();
@@ -78,10 +80,38 @@ function CreateGeometry(structure: ShapeInstance[]): THREE.Geometry {
 	return geometry;
 }
 
+function toggleFullScreen() {
+	var doc = <any>document;
+	if (!doc.mozFullScreenElement && !doc.webkitFullscreenElement) {
+		var canvas = <any>renderer.domElement;
+		if (canvas.mozRequestFullScreen) {
+			canvas.mozRequestFullScreen();
+		} else {
+			canvas.webkitRequestFullscreen((<any>Element).ALLOW_KEYBOARD_INPUT);
+		}
+	} else {
+		if (doc.mozCancelFullScreen) {
+			doc.mozCancelFullScreen();
+		} else {
+			doc.webkitExitFullscreen();
+		}
+	}
+}
+
 window.addEventListener('load', () => {
 		
-	var renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+	document.addEventListener("keydown", e => {
+		if (e.keyCode == 122) {
+			e.preventDefault();
+			toggleFullScreen();
+		}
+	}, false);
+
+	renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 	renderer.setPixelRatio(window.devicePixelRatio);
+	renderer.domElement.addEventListener("dblclick", e => {
+		toggleFullScreen();
+	}, false);
 
 	var camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
 	camera.position.z = 1.5;
@@ -151,14 +181,20 @@ window.addEventListener('load', () => {
 	function doResize() : void {
 		clearTimeout(resizeTimer);
 	  	resizeTimer = setTimeout(() => {
-		    var w = view.offsetWidth, h = window.innerHeight - document.getElementById("header").offsetHeight;
-			w *= 0.95;
-			h *= 0.95;
-			renderer.setSize(w, h);
-			camera.aspect = w / h;
-			camera.updateProjectionMatrix();
+	  		var doc = <any>document;
+			if (!doc.mozFullScreenElement && !doc.webkitFullscreenElement) {
+			    var w = view.offsetWidth, h = window.innerHeight - document.getElementById("header").offsetHeight;
+				w *= 0.95;
+				h *= 0.95;
+				renderer.setSize(w, h);
+				camera.aspect = w / h;
+				camera.updateProjectionMatrix();
 
-			$(".CodeMirror").height(h + "px");			            
+				$(".CodeMirror").height(h + "px");
+			} else {
+				renderer.setSize(window.innerWidth, window.innerHeight);
+				camera.updateProjectionMatrix();
+			}
 	  	}, 100);
 	};
 	window.addEventListener('resize', doResize);
