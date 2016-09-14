@@ -152,14 +152,14 @@ window.addEventListener('load', () => {
 	scene.add(lights[1]);
 	scene.add(lights[2]);
 	
-	var controls = new THREE.OrbitControls(camera, document.getElementById("structure-view"));	
+	var controls = new THREE.OrbitControls(camera, renderer.domElement);	
 	controls.enableKeys = false;
 	controls.target.set(0, 0, 0);
 
 	var turntable = true; 
 
 	var lastTime = new Date().getTime();
-	function animate() : void{
+	function animate() : void {
 
 		var timeNow = new Date().getTime();
 		
@@ -247,7 +247,7 @@ window.addEventListener('load', () => {
 				switch (e.data.type) {
 					case 'result':
 						mesh.geometry = CreateGeometry(e.data.structure);
-						mesh.translateOnAxis(mesh.geometry.center(), mesh.geometry.center().length());
+						mesh.geometry.center();
 
 						$scope.resetViewport();
 
