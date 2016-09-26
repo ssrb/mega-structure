@@ -29,7 +29,7 @@
 var glmat = require('./bower_components/gl-matrix/dist/gl-matrix-min.js');
 var tinycolor = require('./bower_components/tinycolor/tinycolor.js');
 import EisenScripts = require('./examples-generated');
-import ShapeInstance = require('./structure');
+import { ShapeInstance } from './structure';
 
 var renderer : THREE.WebGLRenderer;
 

@@ -31,7 +31,7 @@ var glmat = require('./bower_components/gl-matrix/dist/gl-matrix-min.js');
 var tinycolor = require('./bower_components/tinycolor/dist/tinycolor-min.js');
 var seedrandom = require('./bower_components/seedrandom/seedrandom.min.js');
 
-import ShapeInstance = require('./structure');
+import { ShapeInstance } from './structure';
 import collections = require('./node_modules/typescript-collections');
 
 enum Axis { X, Y, Z };
@@ -141,10 +141,10 @@ function normalizeAngle(angle: number, lower: number) {
 }
 
 interface ProgressFunc {
-	(nshapes: number): void;
+	(nshapes: ShapeInstance[]): void;
 }
 
-class Synthesizer {
+export class Synthesizer {
 
 	public constructor(script: string, progress: ProgressFunc) {
 		this.ast = <ASTNode[]>eisenscript.parse(script);
@@ -226,7 +226,7 @@ class Synthesizer {
 			}
 		}
 		
-		this.progress(shapes.length);
+		this.progress(shapes);
 		
 		return shapes;
 	}
@@ -247,7 +247,7 @@ class Synthesizer {
 			}
 
 			if (shapes.length - lastProgress > 10) {
-				this.progress(shapes.length);
+				this.progress(shapes);
 			}
 			lastProgress = shapes.length;
 
@@ -429,4 +429,3 @@ class Synthesizer {
 	private progress: ProgressFunc;
 	public background: string;
 }
-export = Synthesizer;

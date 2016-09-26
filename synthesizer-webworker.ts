@@ -25,15 +25,16 @@
 // of the authors and should not be interpreted as representing official policies,
 // either expressed or implied, of the FreeBSD Project.
 
-import Synthesizer = require('./synthesizer');
+import { Synthesizer } from './synthesizer';
+import { ShapeInstance } from './structure';
 
 onmessage = function(e) {
 
 	console.log('Synthesizing !');
 	var lastTime = new Date().getTime();
 	var worker = this;
-	var synth = new Synthesizer(e.data, function(nshape : number) {
-		worker.postMessage(JSON.stringify({ type: 'progress', nshape }));
+	var synth = new Synthesizer(e.data, (shapes : ShapeInstance[]) => {
+		worker.postMessage(JSON.stringify({ type: 'progress', nshape: shapes.length }));
 	});
 	var structure = synth.synthesize();
 	var now = new Date().getTime();

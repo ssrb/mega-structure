@@ -27,9 +27,8 @@
 ///<reference path="typings/index.d.ts"/>
 var tinycolor = require('./bower_components/tinycolor/tinycolor.js');
 
-interface ShapeInstance {
+export interface ShapeInstance {
 	shape: string;
 	geospace: Float32Array;
 	colorspace: ColorFormats.HSVA;
 }
-export = ShapeInstance;
