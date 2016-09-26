@@ -33,7 +33,7 @@ onmessage = function(e) {
 	var lastTime = new Date().getTime();
 	var worker = this;
 	var synth = new Synthesizer(e.data, function(nshape : number) {
-		worker.postMessage({ type: 'progress', nshape });
+		worker.postMessage(JSON.stringify({ type: 'progress', nshape }));
 	});
 	var structure = synth.synthesize();
 	var now = new Date().getTime();
@@ -41,7 +41,7 @@ onmessage = function(e) {
 
 	console.log('Posting structure !');
 	lastTime = new Date().getTime();
-	this.postMessage({ type: 'result', structure, background: synth.background });
+	this.postMessage(JSON.stringify({ type: 'result', structure, background: synth.background }));
 	now = new Date().getTime();
 	console.log('Posted in ' + (now - lastTime) + 'ms');
 }

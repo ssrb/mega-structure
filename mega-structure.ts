@@ -248,18 +248,18 @@ window.addEventListener('load', () => {
 
 		var myWorker = new Worker("synthesizer-webworker.js");
 		myWorker.onmessage = function(e) {
-
-			switch (e.data.type) {
+			var msg = JSON.parse(e.data);
+			switch (msg.type) {
 				case 'result':
-					mesh.geometry = CreateGeometry(e.data.structure);
+					mesh.geometry = CreateGeometry(msg.structure);
 					mesh.geometry.center();
 
 					$scope.resetViewport();
 
-					renderer.setClearColor(new THREE.Color(e.data.background));
+					renderer.setClearColor(new THREE.Color(msg.background));
 					break;
 				case 'progress':
-					$scope.progress = e.data.nshape;
+					$scope.progress = msg.nshape;
 					break;
 
 			}
