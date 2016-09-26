@@ -240,32 +240,32 @@ window.addEventListener('load', () => {
 			mesh.rotation.y = 0;		
 		}
 
-		$scope.synthetize = function() {			
-			var myWorker = new Worker("synthesizer-webworker.js");
-			myWorker.onmessage = function(e) {
-
-				switch (e.data.type) {
-					case 'result':
-						mesh.geometry = CreateGeometry(e.data.structure);
-						mesh.geometry.center();
-
-						$scope.resetViewport();
-
-						renderer.setClearColor(new THREE.Color(e.data.background));
-						myWorker.terminate();
-						break;
-					case 'progress':
-						$scope.progress = e.data.nshape;
-						break;
-
-				}
-
-				$scope.$apply();
-			}
+		$scope.synthetize = function() {
 			myWorker.postMessage($scope.cmModel);
 		}
 
 		$scope.progress = 0;
+
+		var myWorker = new Worker("synthesizer-webworker.js");
+		myWorker.onmessage = function(e) {
+
+			switch (e.data.type) {
+				case 'result':
+					mesh.geometry = CreateGeometry(e.data.structure);
+					mesh.geometry.center();
+
+					$scope.resetViewport();
+
+					renderer.setClearColor(new THREE.Color(e.data.background));
+					break;
+				case 'progress':
+					$scope.progress = e.data.nshape;
+					break;
+
+			}
+
+			$scope.$apply();
+		}
 
 		$scope.synthetize();		
 	}]);

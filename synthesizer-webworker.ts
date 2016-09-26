@@ -30,15 +30,19 @@ import Synthesizer = require('./synthesizer');
 onmessage = function(e) {
 
 	console.log('Synthesizing !');
-
+	var lastTime = new Date().getTime();
 	var worker = this;
 	var synth = new Synthesizer(e.data, function(nshape : number) {
 		worker.postMessage({ type: 'progress', nshape });
 	});
 	var structure = synth.synthesize();
+	var now = new Date().getTime();
+	console.log('Synthesized in ' + (now - lastTime) + 'ms');
 
-	console.log('Done. Posting result.');
-
+	console.log('Posting structure !');
+	lastTime = new Date().getTime();
 	this.postMessage({ type: 'result', structure, background: synth.background });
+	now = new Date().getTime();
+	console.log('Posted in ' + (now - lastTime) + 'ms');
 }
 
