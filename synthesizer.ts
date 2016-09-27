@@ -141,7 +141,7 @@ function normalizeAngle(angle: number, lower: number) {
 }
 
 interface ProgressFunc {
-	(nshapes: ShapeInstance[]): void;
+	(nhapes: ShapeInstance[], done: boolean): void;
 }
 
 export class Synthesizer {
@@ -196,8 +196,7 @@ export class Synthesizer {
 		}		
 	}
 
-	public synthesize(): ShapeInstance[] {
-
+	public synthesize() : ShapeInstance[] {
 		var shapes = new Array<ShapeInstance>();
 				
 		for (var si = 0; si < this.ast.length; ++si) {
@@ -226,30 +225,18 @@ export class Synthesizer {
 			}
 		}
 		
-		this.progress(shapes);
-		
+		this.progress(shapes, true);
+
 		return shapes;
 	}
 
 	private synthesizeOne(prod: InvocStatement, shapes: ShapeInstance[]) : void {
-	
-		var lastProgress = shapes.length;
 
 		var queue = new collections.Queue<SynthFrame>();
 
 		this.synthProduction(prod, 0, new collections.Dictionary<number, number>(), glmat.mat4.create(), tinycolor("RED").toHsv(), queue, shapes);
 		
 		while (!queue.isEmpty()) {
-
-			if (shapes.length >= this.maxObjects) {
-				console.log("max objects reached");
-				break;
-			}
-
-			if (shapes.length - lastProgress > 10) {
-				this.progress(shapes);
-			}
-			lastProgress = shapes.length;
 
 			var { rule, globalDepth, clauseDepthMap, geospace, colorspace } = queue.dequeue();
 
@@ -289,6 +276,11 @@ export class Synthesizer {
 						
 			for (var pi = 0; pi < clause.production.length; ++pi) {
 				this.synthProduction(clause.production[pi], globalDepth, clauseDepthMapCopy, geospace, colorspace, queue, shapes);
+
+				if (shapes.length >= this.maxObjects) {
+					return;
+				}
+
 			}
 		}
 	}
@@ -313,6 +305,11 @@ export class Synthesizer {
 					var size = glmat.vec4.length(diag);
 					if (this.minSize <= size && size <= this.maxSize) {
 						shapes.push({ shape: prod.next.name, geospace: childGeospaces[mi], colorspace: childColorspaces[mi] });
+						this.progress(shapes, false);
+						if (shapes.length >= this.maxObjects) {
+							console.log("max objects reached");
+							return;
+						}
 					}
 				}
 				break;
@@ -428,4 +425,5 @@ export class Synthesizer {
 	private prng: prng;
 	private progress: ProgressFunc;
 	public background: string;
+
 }

@@ -30,20 +30,25 @@ import { ShapeInstance } from './structure';
 
 onmessage = function(e) {
 
-	console.log('Synthesizing !');
-	var lastTime = new Date().getTime();
 	var worker = this;
-	var synth = new Synthesizer(e.data, (shapes : ShapeInstance[]) => {
-		worker.postMessage(JSON.stringify({ type: 'progress', nshape: shapes.length }));
-	});
-	var structure = synth.synthesize();
-	var now = new Date().getTime();
-	console.log('Synthesized in ' + (now - lastTime) + 'ms');
 
-	console.log('Posting structure !');
-	lastTime = new Date().getTime();
-	this.postMessage(JSON.stringify({ type: 'result', structure, background: synth.background }));
-	now = new Date().getTime();
-	console.log('Posted in ' + (now - lastTime) + 'ms');
+	var lastChunk = 0;
+	var synth = new Synthesizer(e.data, (shapes : ShapeInstance[], done : boolean) => {
+		if (shapes.length - lastChunk >= 1024 || done) {
+			console.log('Posting chunk !');
+			var tstamp = new Date().getTime();
+			var chunk = shapes.slice(lastChunk, shapes.length);
+			this.postMessage(JSON.stringify({ type: 'result', structure:chunk }));
+			console.log('Posted in ' + (new Date().getTime() - tstamp) + 'ms');
+			lastChunk = shapes.length;
+		}
+	});
+
+	console.log('Synthesizing !');
+	var tstamp = new Date().getTime();
+	synth.synthesize();
+	console.log('Synthesized in ' + (new Date().getTime() - tstamp) + 'ms');
+
+	worker.postMessage(JSON.stringify({ type: 'done', background:synth.background}));
 }
 

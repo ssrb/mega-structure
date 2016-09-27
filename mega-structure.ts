@@ -33,9 +33,11 @@ import { ShapeInstance } from './structure';
 
 var renderer : THREE.WebGLRenderer;
 
-function CreateGeometry(structure: ShapeInstance[]): THREE.Geometry {
+function GenerateGeometry(structure: ShapeInstance[], nshapes : number, geometry : THREE.Geometry) {
 
-	var geometry = new THREE.Geometry();
+	if (structure.length == 0) {
+		return;
+	}
 
 	var triangles = [0, 1, 2, 1, 2, 3,
 		4, 5, 6, 5, 6, 7,
@@ -55,6 +57,7 @@ function CreateGeometry(structure: ShapeInstance[]): THREE.Geometry {
 
 	// TODO: do all that in the web worker and on the GPU !
 	for (var si = 0; si < structure.length; ++si) {
+		var gsi = nshapes + si;
 		switch (structure[si].shape) {
 			case "box":
 				for (var vi = 0; vi < 8; ++vi) {
@@ -62,9 +65,8 @@ function CreateGeometry(structure: ShapeInstance[]): THREE.Geometry {
 					glmat.vec4.transformMat4(vert, [vertices[3 * vi] - 0.5, vertices[3 * vi + 1] - 0.5, vertices[3 * vi + 2] - 0.5, 1], structure[si].geospace);
 					geometry.vertices.push(new THREE.Vector3(vert[0], vert[1], vert[2]));
 				}
-				var tris = [];
 				for (var fi = 0; fi < 12; ++fi) {
-					var face = new THREE.Face3(triangles[3 * fi] + si * 8, triangles[3 * fi + 1] + si * 8, triangles[3 * fi + 2] + si * 8);
+					var face = new THREE.Face3(triangles[3 * fi] + gsi * 8, triangles[3 * fi + 1] + gsi * 8, triangles[3 * fi + 2] + gsi * 8);
 					var rgb = tinycolor(structure[si].colorspace).toRgb();
 					face.color = new THREE.Color(rgb.r / 255, rgb.g / 255, rgb.b / 255);
 					geometry.faces.push(
@@ -76,8 +78,6 @@ function CreateGeometry(structure: ShapeInstance[]): THREE.Geometry {
 				break;
 		}
 	}
-
-	return geometry;
 }
 
 function toggleFullScreen() {
@@ -156,7 +156,9 @@ window.addEventListener('load', () => {
 	controls.enableKeys = false;
 	controls.target.set(0, 0, 0);
 
-	var turntable = true; 
+	var geometry: THREE.Geometry = null;
+
+	var turntable = true;
 
 	var lastTime = new Date().getTime();
 	function animate() : void {
@@ -240,34 +242,37 @@ window.addEventListener('load', () => {
 			mesh.rotation.y = 0;		
 		}
 
-		$scope.synthetize = function() {
+		$scope.synthetize = function() {+
+			console.log('Synth request !');
+			$scope.nshapes = 0;
+			tstamp = new Date().getTime();
+			geometry = new THREE.Geometry();
 			myWorker.postMessage($scope.cmModel);
 		}
 
-		$scope.progress = 0;
+		$scope.nshapes = 0;
+		var tstamp = 0;
 
 		var myWorker = new Worker("synthesizer-webworker.js");
 		myWorker.onmessage = function(e) {
 			var msg = JSON.parse(e.data);
 			switch (msg.type) {
 				case 'result':
-					mesh.geometry = CreateGeometry(msg.structure);
-					mesh.geometry.center();
-
-					$scope.resetViewport();
-
+					GenerateGeometry(msg.structure, $scope.nshapes, geometry);
+					$scope.nshapes += msg.structure.length;
+					break;
+				case 'done':
 					renderer.setClearColor(new THREE.Color(msg.background));
+					mesh.geometry = geometry;
+					mesh.geometry.center();
+					$scope.resetViewport();
+					console.log('Synth request processed in ' + (new Date().getTime() - tstamp) + 'ms');
 					break;
-				case 'progress':
-					$scope.progress = msg.nshape;
-					break;
-
 			}
-
 			$scope.$apply();
 		}
 
-		$scope.synthetize();		
+		$scope.synthetize();
 	}]);
 		
 	requestAnimationFrame(animate);
