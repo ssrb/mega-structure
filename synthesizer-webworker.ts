@@ -33,6 +33,7 @@ var tinycolor = require('./bower_components/tinycolor/tinycolor.js');
 import { Synthesizer } from './synthesizer';
 import { ShapeInstance } from './structure';
 
+// Optimize: 2 pass: 1) compute ArrayBuffer size 2) populate without any alloc in critical loop, do not use THREE
 function GenerateGeometry(structure: ShapeInstance[]) : THREE.BufferGeometry {
 
 	var geometry = new THREE.Geometry();
@@ -53,18 +54,25 @@ function GenerateGeometry(structure: ShapeInstance[]) : THREE.BufferGeometry {
 		1, 1, 0,
 		1, 1, 1];
 
+	for (var vi = 0; vi < vertices.length; ++vi) {
+		vertices[vi] -= 0.5;
+	}
+
+	var vert = [0, 0, 0, 0];
+
 	for (var si = 0; si < structure.length; ++si) {
+		var s = si * 8;
+		var rgb = tinycolor(structure[si].colorspace).toRgb();
+		var color = new THREE.Color(rgb.r / 255, rgb.g / 255, rgb.b / 255);
 		switch (structure[si].shape) {
 			case "box":
-				for (var vi = 0; vi < 8; ++vi) {
-					var vert = [0, 0, 0, 0];
-					glmat.vec4.transformMat4(vert, [vertices[3 * vi] - 0.5, vertices[3 * vi + 1] - 0.5, vertices[3 * vi + 2] - 0.5, 1], structure[si].geospace);
+				for (var vi = 0; vi < vertices.length; vi += 3) {
+					glmat.vec4.transformMat4(vert, [vertices[vi], vertices[vi + 1], vertices[vi + 2], 1], structure[si].geospace);
 					geometry.vertices.push(new THREE.Vector3(vert[0], vert[1], vert[2]));
 				}
-				for (var fi = 0; fi < 12; ++fi) {
-					var face = new THREE.Face3(triangles[3 * fi] + si * 8, triangles[3 * fi + 1] + si * 8, triangles[3 * fi + 2] + si * 8);
-					var rgb = tinycolor(structure[si].colorspace).toRgb();
-					face.color = new THREE.Color(rgb.r / 255, rgb.g / 255, rgb.b / 255);
+				for (var fi = 0; fi < triangles.length; fi += 3) {
+					var face = new THREE.Face3(triangles[fi] + s, triangles[fi + 1] + s, triangles[fi + 2] + s);
+					face.color = color;
 					geometry.faces.push(
 						face
 					);
@@ -95,8 +103,12 @@ onmessage = function(e) {
 	console.log('Synthesizing !');
 	var tstamp = new Date().getTime();
 	var structure = synth.synthesize();
-	var bgeo = GenerateGeometry(structure);
 	console.log('Synthesized in ' + (new Date().getTime() - tstamp) + 'ms');
+
+	console.log('Detailing geometry !');
+	tstamp = new Date().getTime();
+	var bgeo = GenerateGeometry(structure);
+	console.log('Detailed in ' + (new Date().getTime() - tstamp) + 'ms');
 
 	console.log('Posting structure !');
 	tstamp = new Date().getTime();
