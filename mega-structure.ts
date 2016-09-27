@@ -26,59 +26,10 @@
 // either expressed or implied, of the FreeBSD Project.
 
 ///<reference path="typings/index.d.ts"/>
-var glmat = require('./bower_components/gl-matrix/dist/gl-matrix-min.js');
-var tinycolor = require('./bower_components/tinycolor/tinycolor.js');
 import EisenScripts = require('./examples-generated');
 import { ShapeInstance } from './structure';
 
 var renderer : THREE.WebGLRenderer;
-
-function GenerateGeometry(structure: ShapeInstance[], nshapes : number, geometry : THREE.Geometry) {
-
-	if (structure.length == 0) {
-		return;
-	}
-
-	var triangles = [0, 1, 2, 1, 2, 3,
-		4, 5, 6, 5, 6, 7,
-		0, 1, 4, 1, 4, 5,
-		2, 3, 6, 3, 6, 7,
-		0, 2, 4, 2, 4, 6,
-		1, 3, 5, 3, 5, 7];
-
-	var vertices = [0, 0, 0,
-		0, 0, 1,
-		0, 1, 0,
-		0, 1, 1,
-		1, 0, 0,
-		1, 0, 1,
-		1, 1, 0,
-		1, 1, 1];
-
-	// TODO: do all that in the web worker and on the GPU !
-	for (var si = 0; si < structure.length; ++si) {
-		var gsi = nshapes + si;
-		switch (structure[si].shape) {
-			case "box":
-				for (var vi = 0; vi < 8; ++vi) {
-					var vert = [0, 0, 0, 0];
-					glmat.vec4.transformMat4(vert, [vertices[3 * vi] - 0.5, vertices[3 * vi + 1] - 0.5, vertices[3 * vi + 2] - 0.5, 1], structure[si].geospace);
-					geometry.vertices.push(new THREE.Vector3(vert[0], vert[1], vert[2]));
-				}
-				for (var fi = 0; fi < 12; ++fi) {
-					var face = new THREE.Face3(triangles[3 * fi] + gsi * 8, triangles[3 * fi + 1] + gsi * 8, triangles[3 * fi + 2] + gsi * 8);
-					var rgb = tinycolor(structure[si].colorspace).toRgb();
-					face.color = new THREE.Color(rgb.r / 255, rgb.g / 255, rgb.b / 255);
-					geometry.faces.push(
-						face
-					);
-				}
-				break;
-			case "sphere":
-				break;
-		}
-	}
-}
 
 function toggleFullScreen() {
 	var doc = <any>document;
@@ -155,8 +106,6 @@ window.addEventListener('load', () => {
 	var controls = new THREE.OrbitControls(camera, renderer.domElement);	
 	controls.enableKeys = false;
 	controls.target.set(0, 0, 0);
-
-	var geometry: THREE.Geometry = null;
 
 	var turntable = true;
 
@@ -246,7 +195,6 @@ window.addEventListener('load', () => {
 			console.log('Synth request !');
 			$scope.nshapes = 0;
 			tstamp = new Date().getTime();
-			geometry = new THREE.Geometry();
 			myWorker.postMessage($scope.cmModel);
 		}
 
@@ -255,16 +203,18 @@ window.addEventListener('load', () => {
 
 		var myWorker = new Worker("synthesizer-webworker.js");
 		myWorker.onmessage = function(e) {
-			var msg = JSON.parse(e.data);
+			var msg = e.data;
 			switch (msg.type) {
-				case 'result':
-					GenerateGeometry(msg.structure, $scope.nshapes, geometry);
-					$scope.nshapes += msg.structure.length;
+				case 'progress':
+					$scope.nshapes = msg.nshapes;
 					break;
 				case 'done':
 					renderer.setClearColor(new THREE.Color(msg.background));
+					var geometry = new THREE.BufferGeometry();
+					geometry.addAttribute('position', new THREE.BufferAttribute(new Float32Array(msg.position), 3));
+					geometry.addAttribute('color', new THREE.BufferAttribute(new Float32Array(msg.color), 3 ));
+					geometry.center();
 					mesh.geometry = geometry;
-					mesh.geometry.center();
 					$scope.resetViewport();
 					console.log('Synth request processed in ' + (new Date().getTime() - tstamp) + 'ms');
 					break;
