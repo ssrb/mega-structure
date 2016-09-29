@@ -178,12 +178,38 @@ window.addEventListener('load', () => {
 				depthWrite: false	
 			} );
 			quad = new THREE.Mesh( plane, materialScreen );
+			quad.position.z = -1;
 			quad.rotateX(Math.PI);
 			olaycam = new THREE.OrthographicCamera(-s.width/2, s.width/2, -s.height/2, s.height/2, -10000, 10000);
 			olaycam.position.z = 100;
 			olayscene = new THREE.Scene();
 			olayscene.add(olaycam);
-			olayscene.add(quad);
+			olayscene.add(quad);			
+
+			var canvas = document.createElement('canvas');
+			canvas.width = 32;
+			canvas.height = 32;
+			var context = canvas.getContext('2d');		
+			var radius = 70;
+
+			context.beginPath();
+			context.arc(0, 0, radius, 0, 2 * Math.PI, false);
+			context.fillStyle = 'green';
+			context.fill();
+			context.lineWidth = 5;
+			context.strokeStyle = '#003300';
+			context.stroke();
+
+			var tt = new THREE.Texture(canvas);
+			tt.needsUpdate = true;
+			var qq = new THREE.Mesh( new THREE.PlaneBufferGeometry( 100, 100	 ), new THREE.ShaderMaterial( {
+				uniforms: { tDiffuse: { value: tt }},
+				vertexShader: document.getElementById( 'vertexShader' ).textContent,
+				fragmentShader: document.getElementById( 'fragment_shader_screen' ).textContent,
+				depthWrite: false	
+			}));
+			qq.rotateX(Math.PI);
+			olayscene.add(qq);
 
 	  	}, 100);
 	};
