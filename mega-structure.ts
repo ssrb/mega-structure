@@ -59,6 +59,7 @@ window.addEventListener('load', () => {
 	}, false);
 
 	renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+	renderer.autoClear = false;
 	renderer.setPixelRatio(window.devicePixelRatio);
 	renderer.domElement.addEventListener("dblclick", e => {
 		toggleFullScreen();
@@ -75,21 +76,38 @@ window.addEventListener('load', () => {
 
 	// Overlay test
 	var s = renderer.getSize();
-	var renderTarget = new THREE.WebGLRenderTarget(s.width, s.height, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter, format: THREE.RGBFormat });
-	var materialScreen = new THREE.ShaderMaterial( {
-		uniforms: { tDiffuse: { value: (<any>renderTarget).texture } },
-		vertexShader: document.getElementById( 'vertexShader' ).textContent,
-		fragmentShader: document.getElementById( 'fragment_shader_screen' ).textContent,
-		depthWrite: false	
-	} );
-	var plane = new THREE.PlaneBufferGeometry( s.width, s.height );	
-	var quad = new THREE.Mesh( plane, materialScreen );
-	quad.rotateX(Math.PI);
 	var olaycam = new THREE.OrthographicCamera(-s.width/2, s.width/2, -s.height/2, s.height/2, -10000, 10000);
 	olaycam.position.z = 100;
 	var olayscene = new THREE.Scene();
 	olayscene.add(olaycam);
-	olayscene.add(quad);
+
+	var canvas = document.createElement('canvas');
+	canvas.width = 32;
+	canvas.height = 32;
+	var context = canvas.getContext('2d');
+	var radius = 70;
+
+	context.beginPath();
+	context.arc(0, 0, radius, 0, 2 * Math.PI, false);
+	context.fillStyle = 'green';
+	context.fill();
+	context.lineWidth = 5;
+	context.strokeStyle = '#003300';
+	context.stroke();
+
+	var tt = new THREE.Texture(canvas);
+	tt.needsUpdate = true;
+	var qq = new THREE.Mesh( new THREE.PlaneBufferGeometry( 100, 100 ), new THREE.ShaderMaterial( {
+		uniforms: { tDiffuse: { value: tt }},
+		vertexShader: document.getElementById( 'vertexShader' ).textContent,
+		fragmentShader: document.getElementById( 'fragment_shader_screen' ).textContent,
+		depthWrite: false,
+		depthTest: false
+	}));
+	// Face the ortho camera
+	qq.rotateX(Math.PI);
+
+	olayscene.add(qq);
 	// End
 
 	var material =
@@ -140,7 +158,9 @@ window.addEventListener('load', () => {
 			mesh.rotation.y += dtheta;
 		}
 		
-		renderer.render(scene, camera, renderTarget, true);
+		renderer.clear(true, true, true);
+		renderer.render(scene, camera);
+		renderer.clear(false, true, true);
 		renderer.render(olayscene, olaycam);
 
 		requestAnimationFrame(animate);
@@ -158,58 +178,20 @@ window.addEventListener('load', () => {
 				w *= 0.95;
 				h *= 0.95;
 				renderer.setSize(w, h);
-				renderTarget.setSize(w, h);				
 				camera.aspect = w / h;
 				camera.updateProjectionMatrix();
 				$(".CodeMirror").height(h + "px");
 			} else {
 				renderer.setSize(window.innerWidth, window.innerHeight);
-				renderTarget.setSize(window.innerWidth, window.innerHeight);
 				camera.updateProjectionMatrix();
 			}
 
 			var s = renderer.getSize();
-			plane = new THREE.PlaneBufferGeometry( s.width, s.height );	
-			renderTarget = new THREE.WebGLRenderTarget(s.width, s.height, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter, format: THREE.RGBFormat });
-			materialScreen = new THREE.ShaderMaterial( {
-				uniforms: { tDiffuse: { value: (<any>renderTarget).texture } },
-				vertexShader: document.getElementById( 'vertexShader' ).textContent,
-				fragmentShader: document.getElementById( 'fragment_shader_screen' ).textContent,
-				depthWrite: false	
-			} );
-			quad = new THREE.Mesh( plane, materialScreen );
-			quad.position.z = -1;
-			quad.rotateX(Math.PI);
-			olaycam = new THREE.OrthographicCamera(-s.width/2, s.width/2, -s.height/2, s.height/2, -10000, 10000);
-			olaycam.position.z = 100;
-			olayscene = new THREE.Scene();
-			olayscene.add(olaycam);
-			olayscene.add(quad);			
-
-			var canvas = document.createElement('canvas');
-			canvas.width = 32;
-			canvas.height = 32;
-			var context = canvas.getContext('2d');		
-			var radius = 70;
-
-			context.beginPath();
-			context.arc(0, 0, radius, 0, 2 * Math.PI, false);
-			context.fillStyle = 'green';
-			context.fill();
-			context.lineWidth = 5;
-			context.strokeStyle = '#003300';
-			context.stroke();
-
-			var tt = new THREE.Texture(canvas);
-			tt.needsUpdate = true;
-			var qq = new THREE.Mesh( new THREE.PlaneBufferGeometry( 100, 100	 ), new THREE.ShaderMaterial( {
-				uniforms: { tDiffuse: { value: tt }},
-				vertexShader: document.getElementById( 'vertexShader' ).textContent,
-				fragmentShader: document.getElementById( 'fragment_shader_screen' ).textContent,
-				depthWrite: false	
-			}));
-			qq.rotateX(Math.PI);
-			olayscene.add(qq);
+			olaycam.left = -s.width / 2;
+			olaycam.right = s.width / 2;
+			olaycam.top = -s.height / 2;
+			olaycam.bottom = s.height / 2;
+			olaycam.updateProjectionMatrix();
 
 	  	}, 100);
 	};
