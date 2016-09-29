@@ -97,10 +97,8 @@ window.addEventListener('load', () => {
 
 	var tt = new THREE.Texture(canvas);
 	tt.needsUpdate = true;
-	var qq = new THREE.Mesh( new THREE.PlaneBufferGeometry( 100, 100 ), new THREE.ShaderMaterial( {
-		uniforms: { tDiffuse: { value: tt }},
-		vertexShader: document.getElementById( 'vertexShader' ).textContent,
-		fragmentShader: document.getElementById( 'fragment_shader_screen' ).textContent,
+	var qq = new THREE.Mesh( new THREE.PlaneBufferGeometry( 100, 100 ), new THREE.MeshBasicMaterial( {
+		map: tt,
 		depthWrite: false,
 		depthTest: false
 	}));
