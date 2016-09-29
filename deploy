@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e # exit with nonzero exit code if anything fails
-if [[ $TRAVIS ]]; then
+if [[ $TRAVIS && $TRAVIS_BRANCH=="master" ]]; then
   mkdir _site
   cd _site
   cp ../mega-structure.html .
@@ -20,5 +20,5 @@ if [[ $TRAVIS ]]; then
   # /dev/null to hide any sensitive credential data that might otherwise be exposed.
   git push --force --quiet git@github.com:ssrb/mega-structure.git master:gh-pages > /dev/null 2>&1
 else
-  echo 'You are not running Travis-CI!'
+  echo 'You are not running Travis-CI on the master branch !'
 fi
