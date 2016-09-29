@@ -97,15 +97,15 @@ window.addEventListener('load', () => {
 
 	var tt = new THREE.Texture(canvas);
 	tt.needsUpdate = true;
-	var qq = new THREE.Mesh( new THREE.PlaneBufferGeometry( 100, 100 ), new THREE.MeshBasicMaterial( {
+	var progress = new THREE.Mesh( new THREE.PlaneBufferGeometry( 100, 100 ), new THREE.MeshBasicMaterial( {
 		map: tt,
 		depthWrite: false,
 		depthTest: false
 	}));
 	// Face the ortho camera
-	qq.rotateX(Math.PI);
-
-	olayscene.add(qq);
+	progress.rotateX(Math.PI);
+	progress.visible = false;
+	olayscene.add(progress);
 	// End
 
 	var material =
@@ -158,8 +158,11 @@ window.addEventListener('load', () => {
 		
 		renderer.clear(true, true, true);
 		renderer.render(scene, camera);
-		renderer.clear(false, true, true);
-		renderer.render(olayscene, olaycam);
+
+		if (progress.visible) {
+			renderer.clear(false, true, true);
+			renderer.render(olayscene, olaycam);
+		}
 
 		requestAnimationFrame(animate);
 
@@ -240,6 +243,7 @@ window.addEventListener('load', () => {
 			console.log('Synth request !');
 			$scope.nshapes = 0;
 			tstamp = new Date().getTime();
+			progress.visible = true;
 			myWorker.postMessage($scope.cmModel);
 		}
 
@@ -259,6 +263,7 @@ window.addEventListener('load', () => {
 					geometry.addAttribute('position', new THREE.BufferAttribute(new Float32Array(msg.position), 3));
 					geometry.addAttribute('color', new THREE.BufferAttribute(new Float32Array(msg.color), 3 ));
 					geometry.center();
+					progress.visible = false;
 					mesh.geometry = geometry;
 					$scope.resetViewport();
 					console.log('Synth request processed in ' + (new Date().getTime() - tstamp) + 'ms');
