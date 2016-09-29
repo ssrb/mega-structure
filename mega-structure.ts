@@ -73,6 +73,25 @@ window.addEventListener('load', () => {
 	var scene = new THREE.Scene();
 	scene.add(camera);
 
+	// Overlay test
+	var s = renderer.getSize();
+	var renderTarget = new THREE.WebGLRenderTarget(s.width, s.height, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter, format: THREE.RGBFormat });
+	var materialScreen = new THREE.ShaderMaterial( {
+		uniforms: { tDiffuse: { value: (<any>renderTarget).texture } },
+		vertexShader: document.getElementById( 'vertexShader' ).textContent,
+		fragmentShader: document.getElementById( 'fragment_shader_screen' ).textContent,
+		depthWrite: false	
+	} );
+	var plane = new THREE.PlaneBufferGeometry( s.width, s.height );	
+	var quad = new THREE.Mesh( plane, materialScreen );
+	quad.rotateX(Math.PI);
+	var olaycam = new THREE.OrthographicCamera(-s.width/2, s.width/2, -s.height/2, s.height/2, -10000, 10000);
+	olaycam.position.z = 100;
+	var olayscene = new THREE.Scene();
+	olayscene.add(olaycam);
+	olayscene.add(quad);
+	// End
+
 	var material =
 		new THREE.MeshPhongMaterial({
 			vertexColors: THREE.FaceColors,
@@ -116,12 +135,13 @@ window.addEventListener('load', () => {
 		
 		if (turntable) {
 			var dt = (timeNow - lastTime) / (60 * 1000);
-			var dtheta = 2 * Math.PI * 1 * dt				
+			var dtheta = 2 * Math.PI * 1 * dt
 			mesh.rotation.x += dtheta;
 			mesh.rotation.y += dtheta;
 		}
 		
-		renderer.render(scene, camera);
+		renderer.render(scene, camera, renderTarget, true);
+		renderer.render(olayscene, olaycam);
 
 		requestAnimationFrame(animate);
 
@@ -138,14 +158,33 @@ window.addEventListener('load', () => {
 				w *= 0.95;
 				h *= 0.95;
 				renderer.setSize(w, h);
+				renderTarget.setSize(w, h);				
 				camera.aspect = w / h;
 				camera.updateProjectionMatrix();
-
 				$(".CodeMirror").height(h + "px");
 			} else {
 				renderer.setSize(window.innerWidth, window.innerHeight);
+				renderTarget.setSize(window.innerWidth, window.innerHeight);
 				camera.updateProjectionMatrix();
 			}
+
+			var s = renderer.getSize();
+			plane = new THREE.PlaneBufferGeometry( s.width, s.height );	
+			renderTarget = new THREE.WebGLRenderTarget(s.width, s.height, { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter, format: THREE.RGBFormat });
+			materialScreen = new THREE.ShaderMaterial( {
+				uniforms: { tDiffuse: { value: (<any>renderTarget).texture } },
+				vertexShader: document.getElementById( 'vertexShader' ).textContent,
+				fragmentShader: document.getElementById( 'fragment_shader_screen' ).textContent,
+				depthWrite: false	
+			} );
+			quad = new THREE.Mesh( plane, materialScreen );
+			quad.rotateX(Math.PI);
+			olaycam = new THREE.OrthographicCamera(-s.width/2, s.width/2, -s.height/2, s.height/2, -10000, 10000);
+			olaycam.position.z = 100;
+			olayscene = new THREE.Scene();
+			olayscene.add(olaycam);
+			olayscene.add(quad);
+
 	  	}, 100);
 	};
 	window.addEventListener('resize', doResize);
@@ -184,11 +223,11 @@ window.addEventListener('load', () => {
 			camera.rotation.y = 0;
 			camera.rotation.z = 0;
 					
-			controls.target.set(0, 0, 0);			
+			controls.target.set(0, 0, 0);
 			controls.update();
 
 			mesh.rotation.x = 0;
-			mesh.rotation.y = 0;		
+			mesh.rotation.y = 0;
 		}
 
 		$scope.synthetize = function() {+
