@@ -25,12 +25,30 @@
 // of the authors and should not be interpreted as representing official policies,
 // either expressed or implied, of the FreeBSD Project.
 
-export class Progress {
+export class Progress extends THREE.Mesh {
 
 	public constructor() {
+
+		var canvas = document.createElement('canvas');
+		var texture = new THREE.Texture(canvas);
+
+		super(new THREE.PlaneBufferGeometry(1, 1), new THREE.MeshBasicMaterial( {
+			map: texture,
+			depthWrite: false,
+			depthTest: false,
+			transparent: true
+		}));
+
+		this.texture = texture;
+		this.texture.needsUpdate = true;
+
+		this.canvas = canvas;
+
+		this.rotateX(Math.PI);
+		this.visible = false;
+
 		this.nshapes = 0;
 		this.nprocessed = 0;
-		this.canvas = document.createElement('canvas');
 	}
 
 	public init() {
@@ -43,14 +61,16 @@ export class Progress {
 		this.nprocessed = msg.nprocessed;
 	}
 
-	public render(tick : number, size: number) {
-		
+	public setPixelSize(size: number) {
 		this.canvas.width = this.canvas.height = size;
+	}
+
+	public animate(tick : number) {
 
 		var context = this.canvas.getContext('2d');
 		context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-		context.font = "60px serif";
+		context.font = "48px serif";
 		context.textAlign = "center";
 		context.fillStyle = 'white';
 		context.strokeStyle = 'black';
@@ -81,9 +101,12 @@ export class Progress {
 		context.closePath();
 
 		context.fill();
+
+		this.texture.needsUpdate = true;
 	}
 
-	public canvas : HTMLCanvasElement;
+	canvas : HTMLCanvasElement;
+	texture : THREE.Texture;
 	nshapes: number;
 	nprocessed: number;
 	lastTick : number;

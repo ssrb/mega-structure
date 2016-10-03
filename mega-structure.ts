@@ -75,25 +75,12 @@ window.addEventListener('load', () => {
 	var scene = new THREE.Scene();
 	scene.add(camera);
 
-	// Overlay test
 	var progress = new Progress();
 	var olaycam = new THREE.OrthographicCamera(-0.5 * camera.aspect, 0.5 * camera.aspect, -0.5, 0.5, 0.1, 10000);
 	olaycam.position.z = 100;
 	var olayscene = new THREE.Scene();
 	olayscene.add(olaycam);
-
-	var tt = new THREE.Texture(progress.canvas);
-	var progressMesh = new THREE.Mesh( new THREE.PlaneBufferGeometry(1, 1), new THREE.MeshBasicMaterial( {
-		map: tt,
-		depthWrite: false,
-		depthTest: false,
-		transparent: true
-	}));
-	// Face the ortho camera
-	progressMesh.rotateX(Math.PI);
-	progressMesh.visible = false;
-	olayscene.add(progressMesh);
-	// End
+	olayscene.add(progress);
 
 	var material =
 		new THREE.MeshPhongMaterial({
@@ -146,10 +133,9 @@ window.addEventListener('load', () => {
 		renderer.clear(true, true, true);
 		renderer.render(scene, camera);
 
-		if (progressMesh.visible) {
+		if (progress.visible) {
 			var s = renderer.getSize();
-			progress.render(timeNow, s.height);
-			tt.needsUpdate = true;
+			progress.animate(timeNow);
 			renderer.clear(false, true, true);
 			renderer.render(olayscene, olaycam);
 		}
@@ -181,6 +167,8 @@ window.addEventListener('load', () => {
 			olaycam.left = -0.5 * camera.aspect;
 			olaycam.right = 0.5 * camera.aspect;
 			olaycam.updateProjectionMatrix();
+
+			progress.setPixelSize(s.height);
 
 	  	}, 100);
 	};
@@ -231,7 +219,7 @@ window.addEventListener('load', () => {
 			console.log('Synth request !');
 			progress.init();
 			tstamp = new Date().getTime();
-			progressMesh.visible = true;
+			progress.visible = true;
 			myWorker.postMessage($scope.cmModel);
 		}
 
@@ -250,7 +238,7 @@ window.addEventListener('load', () => {
 					geometry.addAttribute('position', new THREE.BufferAttribute(new Float32Array(msg.position), 3));
 					geometry.addAttribute('color', new THREE.BufferAttribute(new Float32Array(msg.color), 3 ));
 					geometry.center();
-					progressMesh.visible = false;
+					progress.visible = false;
 					mesh.geometry = geometry;
 					$scope.resetViewport();
 					console.log('Synth request processed in ' + (new Date().getTime() - tstamp) + 'ms');
