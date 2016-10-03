@@ -219,7 +219,6 @@ window.addEventListener('load', () => {
 			console.log('Synth request !');
 			progress.init();
 			tstamp = new Date().getTime();
-			progress.visible = true;
 			myWorker.postMessage($scope.cmModel);
 		}
 
@@ -236,9 +235,8 @@ window.addEventListener('load', () => {
 					renderer.setClearColor(new THREE.Color(msg.background));
 					var geometry = new THREE.BufferGeometry();
 					geometry.addAttribute('position', new THREE.BufferAttribute(new Float32Array(msg.position), 3));
-					geometry.addAttribute('color', new THREE.BufferAttribute(new Float32Array(msg.color), 3 ));
+					geometry.addAttribute('color', new THREE.BufferAttribute(new Float32Array(msg.color), 3));
 					geometry.center();
-					progress.visible = false;
 					mesh.geometry = geometry;
 					$scope.resetViewport();
 					console.log('Synth request processed in ' + (new Date().getTime() - tstamp) + 'ms');
