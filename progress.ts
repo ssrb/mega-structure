@@ -62,7 +62,7 @@ export class Progress extends THREE.Mesh {
 	}
 
 	public setPixelSize(size: number) {
-		this.canvas.width = this.canvas.height = size;
+		this.canvas.width = this.canvas.height = Math.pow(2, Math.ceil(Math.log(size) / Math.log(2)));
 	}
 
 	public animate(tick : number) {
