@@ -229,7 +229,7 @@ window.addEventListener('load', () => {
 
 		$scope.synthetize = function() {+
 			console.log('Synth request !');
-			progress.nshapes = 0;
+			progress.init();
 			tstamp = new Date().getTime();
 			progressMesh.visible = true;
 			myWorker.postMessage($scope.cmModel);
@@ -242,7 +242,7 @@ window.addEventListener('load', () => {
 			var msg = e.data;
 			switch (msg.type) {
 				case 'progress':
-					progress.nshapes = msg.nshapes;
+					progress.update(msg);
 					break;
 				case 'done':
 					renderer.setClearColor(new THREE.Color(msg.background));

@@ -29,9 +29,19 @@ export class Progress {
 
 	public constructor() {
 		this.nshapes = 0;
+		this.nprocessed = 0;
 		this.canvas = document.createElement('canvas');
 	}
 
+	public init() {
+		this.nshapes = 0;
+		this.nprocessed = 0;
+	}
+
+	public update(msg: any) {
+		this.nshapes = msg.nshapes;
+		this.nprocessed = msg.nprocessed;
+	}
 
 	public render(tick : number, size: number) {
 		
@@ -60,13 +70,13 @@ export class Progress {
 
 		context.stroke();
 
-		var percent = 80;
+		var proccessedRatio = this.nprocessed / this.nshapes;
 
 		context.beginPath();
 		context.moveTo(this.canvas.width / 2 - 100, this.canvas.height / 2 + 100);
 		context.lineTo(this.canvas.width / 2 - 100, this.canvas.height / 2 + 120);
-		context.lineTo(this.canvas.width / 2 - 100 + 2 * percent, this.canvas.height / 2 + 120);
-		context.lineTo(this.canvas.width / 2 - 100 + 2 * percent, this.canvas.height / 2 + 100);
+		context.lineTo(this.canvas.width / 2 - 100 + 200 * proccessedRatio, this.canvas.height / 2 + 120);
+		context.lineTo(this.canvas.width / 2 - 100 + 200 * proccessedRatio, this.canvas.height / 2 + 100);
 		context.lineTo(this.canvas.width / 2 - 100, this.canvas.height / 2 + 100);
 		context.closePath();
 
@@ -74,6 +84,7 @@ export class Progress {
 	}
 
 	public canvas : HTMLCanvasElement;
-	public nshapes: number;
-	public lastTick : number;
+	nshapes: number;
+	nprocessed: number;
+	lastTick : number;
 };
