@@ -67,25 +67,34 @@ export class Progress extends THREE.Mesh {
 
 	public animate(tick : number) {
 
+		var progressX = this.canvas.width / 2;
+		var progressY = this.canvas.height / 2;
+		var halfProgressWidth = this.canvas.width / 8;
+		var halfProgressHeight = halfProgressWidth / 10;
+
+		var textX = progressX;
+		var textY = progressY - 3 * halfProgressHeight;
+		var fontSize = 4 * halfProgressHeight + "px serif";
+
 		var context = this.canvas.getContext('2d');
 		context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-		context.font = "48px serif";
+		context.font = fontSize;
 		context.textAlign = "center";
 		context.fillStyle = 'white';
 		context.strokeStyle = 'black';
-		context.fillText(this.nshapes + " shapes", this.canvas.width / 2, this.canvas.height / 2);
-		context.strokeText(this.nshapes + " shapes", this.canvas.width / 2, this.canvas.height / 2);
+		context.fillText(this.nshapes + " shapes", textX, textY);
+		context.strokeText(this.nshapes + " shapes", textX, textY);
 
 		context.fillStyle = 'white';
 		context.strokeStyle = 'white';
 
 		context.beginPath();
-		context.moveTo(this.canvas.width / 2 - 100, this.canvas.height / 2 + 100);
-		context.lineTo(this.canvas.width / 2 - 100, this.canvas.height / 2 + 120);
-		context.lineTo(this.canvas.width / 2 + 100, this.canvas.height / 2 + 120);
-		context.lineTo(this.canvas.width / 2 + 100, this.canvas.height / 2 + 100);
-		context.lineTo(this.canvas.width / 2 - 100, this.canvas.height / 2 + 100);
+		context.moveTo(progressX - halfProgressWidth, progressY - halfProgressHeight);
+		context.lineTo(progressX - halfProgressWidth, progressY + halfProgressHeight);
+		context.lineTo(progressX + halfProgressWidth, progressY + halfProgressHeight);
+		context.lineTo(progressX + halfProgressWidth, progressY - halfProgressHeight);
+		context.lineTo(progressX - halfProgressWidth, progressY - halfProgressHeight);
 		context.closePath();
 
 		context.stroke();
@@ -93,11 +102,11 @@ export class Progress extends THREE.Mesh {
 		var proccessedRatio = this.nprocessed / this.nshapes;
 
 		context.beginPath();
-		context.moveTo(this.canvas.width / 2 - 100, this.canvas.height / 2 + 100);
-		context.lineTo(this.canvas.width / 2 - 100, this.canvas.height / 2 + 120);
-		context.lineTo(this.canvas.width / 2 - 100 + 200 * proccessedRatio, this.canvas.height / 2 + 120);
-		context.lineTo(this.canvas.width / 2 - 100 + 200 * proccessedRatio, this.canvas.height / 2 + 100);
-		context.lineTo(this.canvas.width / 2 - 100, this.canvas.height / 2 + 100);
+		context.moveTo(progressX - halfProgressWidth, progressY - halfProgressHeight);
+		context.lineTo(progressX - halfProgressWidth, progressY + halfProgressHeight);
+		context.lineTo(progressX - halfProgressWidth * (1 - 2 * proccessedRatio), progressY + halfProgressHeight);
+		context.lineTo(progressX - halfProgressWidth * (1 - 2 * proccessedRatio), progressY - halfProgressHeight);
+		context.lineTo(progressX - halfProgressWidth, progressY - halfProgressHeight);
 		context.closePath();
 
 		context.fill();
