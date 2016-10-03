@@ -1,5 +1,5 @@
 set background white
-{ s 50 0.1 50 y -6 color white } box
+//{ s 50 0.1 50 y -6 color white } box
 
 { b 0.99 sat 0.1 hue 0} r1
 
