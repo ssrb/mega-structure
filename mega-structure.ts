@@ -28,6 +28,7 @@
 ///<reference path="typings/index.d.ts"/>
 import EisenScripts = require('./examples-generated');
 import { ShapeInstance } from './structure';
+import { Progress } from './progress';
 
 var renderer : THREE.WebGLRenderer;
 
@@ -75,37 +76,23 @@ window.addEventListener('load', () => {
 	scene.add(camera);
 
 	// Overlay test
-	var s = renderer.getSize();
-	var olaycam = new THREE.OrthographicCamera(-s.width/2, s.width/2, -s.height/2, s.height/2, -10000, 10000);
+	var progress = new Progress();
+	var olaycam = new THREE.OrthographicCamera(-0.5 * camera.aspect, 0.5 * camera.aspect, -0.5, 0.5, 0.1, 10000);
 	olaycam.position.z = 100;
 	var olayscene = new THREE.Scene();
 	olayscene.add(olaycam);
 
-	var canvas = document.createElement('canvas');
-	canvas.width = 32;
-	canvas.height = 32;
-	var context = canvas.getContext('2d');
-	var radius = 70;
-
-	context.beginPath();
-	context.arc(0, 0, radius, 0, 2 * Math.PI, false);
-	context.fillStyle = 'green';
-	context.fill();
-	context.lineWidth = 5;
-	context.strokeStyle = '#003300';
-	context.stroke();
-
-	var tt = new THREE.Texture(canvas);
-	tt.needsUpdate = true;
-	var progress = new THREE.Mesh( new THREE.PlaneBufferGeometry( 100, 100 ), new THREE.MeshBasicMaterial( {
+	var tt = new THREE.Texture(progress.canvas);
+	var progressMesh = new THREE.Mesh( new THREE.PlaneBufferGeometry(1, 1), new THREE.MeshBasicMaterial( {
 		map: tt,
 		depthWrite: false,
-		depthTest: false
+		depthTest: false,
+		transparent: true
 	}));
 	// Face the ortho camera
-	progress.rotateX(Math.PI);
-	progress.visible = false;
-	olayscene.add(progress);
+	progressMesh.rotateX(Math.PI);
+	progressMesh.visible = false;
+	olayscene.add(progressMesh);
 	// End
 
 	var material =
@@ -159,7 +146,10 @@ window.addEventListener('load', () => {
 		renderer.clear(true, true, true);
 		renderer.render(scene, camera);
 
-		if (progress.visible) {
+		if (progressMesh.visible) {
+			var s = renderer.getSize();
+			progress.render(timeNow, s.height);
+			tt.needsUpdate = true;
 			renderer.clear(false, true, true);
 			renderer.render(olayscene, olaycam);
 		}
@@ -179,19 +169,17 @@ window.addEventListener('load', () => {
 				w *= 0.95;
 				h *= 0.95;
 				renderer.setSize(w, h);
-				camera.aspect = w / h;
-				camera.updateProjectionMatrix();
 				$(".CodeMirror").height(h + "px");
 			} else {
 				renderer.setSize(window.innerWidth, window.innerHeight);
-				camera.updateProjectionMatrix();
 			}
 
 			var s = renderer.getSize();
-			olaycam.left = -s.width / 2;
-			olaycam.right = s.width / 2;
-			olaycam.top = -s.height / 2;
-			olaycam.bottom = s.height / 2;
+			camera.aspect = s.width / s.height;
+			camera.updateProjectionMatrix();
+
+			olaycam.left = -0.5 * camera.aspect;
+			olaycam.right = 0.5 * camera.aspect;
 			olaycam.updateProjectionMatrix();
 
 	  	}, 100);
@@ -241,13 +229,12 @@ window.addEventListener('load', () => {
 
 		$scope.synthetize = function() {+
 			console.log('Synth request !');
-			$scope.nshapes = 0;
+			progress.nshapes = 0;
 			tstamp = new Date().getTime();
-			progress.visible = true;
+			progressMesh.visible = true;
 			myWorker.postMessage($scope.cmModel);
 		}
 
-		$scope.nshapes = 0;
 		var tstamp = 0;
 
 		var myWorker = new Worker("synthesizer-webworker.js");
@@ -255,7 +242,7 @@ window.addEventListener('load', () => {
 			var msg = e.data;
 			switch (msg.type) {
 				case 'progress':
-					$scope.nshapes = msg.nshapes;
+					progress.nshapes = msg.nshapes;
 					break;
 				case 'done':
 					renderer.setClearColor(new THREE.Color(msg.background));
@@ -263,7 +250,7 @@ window.addEventListener('load', () => {
 					geometry.addAttribute('position', new THREE.BufferAttribute(new Float32Array(msg.position), 3));
 					geometry.addAttribute('color', new THREE.BufferAttribute(new Float32Array(msg.color), 3 ));
 					geometry.center();
-					progress.visible = false;
+					progressMesh.visible = false;
 					mesh.geometry = geometry;
 					$scope.resetViewport();
 					console.log('Synth request processed in ' + (new Date().getTime() - tstamp) + 'ms');
