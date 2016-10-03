@@ -28,6 +28,7 @@
 ///<reference path="typings/index.d.ts"/>
 import EisenScripts = require('./examples-generated');
 import { ShapeInstance } from './structure';
+import { Progress } from './progress';
 
 var renderer : THREE.WebGLRenderer;
 
@@ -59,6 +60,7 @@ window.addEventListener('load', () => {
 	}, false);
 
 	renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+	renderer.autoClear = false;
 	renderer.setPixelRatio(window.devicePixelRatio);
 	renderer.domElement.addEventListener("dblclick", e => {
 		toggleFullScreen();
@@ -72,6 +74,13 @@ window.addEventListener('load', () => {
 
 	var scene = new THREE.Scene();
 	scene.add(camera);
+
+	var progress = new Progress();
+	var olaycam = new THREE.OrthographicCamera(-0.5 * camera.aspect, 0.5 * camera.aspect, -0.5, 0.5, 0.1, 10000);
+	olaycam.position.z = 100;
+	var olayscene = new THREE.Scene();
+	olayscene.add(olaycam);
+	olayscene.add(progress);
 
 	var material =
 		new THREE.MeshPhongMaterial({
@@ -116,12 +125,20 @@ window.addEventListener('load', () => {
 		
 		if (turntable) {
 			var dt = (timeNow - lastTime) / (60 * 1000);
-			var dtheta = 2 * Math.PI * 1 * dt				
+			var dtheta = 2 * Math.PI * 1 * dt
 			mesh.rotation.x += dtheta;
 			mesh.rotation.y += dtheta;
 		}
 		
+		renderer.clear(true, true, true);
 		renderer.render(scene, camera);
+
+		if (progress.visible) {
+			var s = renderer.getSize();
+			progress.animate(timeNow);
+			renderer.clear(false, true, true);
+			renderer.render(olayscene, olaycam);
+		}
 
 		requestAnimationFrame(animate);
 
@@ -138,14 +155,21 @@ window.addEventListener('load', () => {
 				w *= 0.95;
 				h *= 0.95;
 				renderer.setSize(w, h);
-				camera.aspect = w / h;
-				camera.updateProjectionMatrix();
-
 				$(".CodeMirror").height(h + "px");
 			} else {
 				renderer.setSize(window.innerWidth, window.innerHeight);
-				camera.updateProjectionMatrix();
 			}
+
+			var s = renderer.getSize();
+			camera.aspect = s.width / s.height;
+			camera.updateProjectionMatrix();
+
+			olaycam.left = -0.5 * camera.aspect;
+			olaycam.right = 0.5 * camera.aspect;
+			olaycam.updateProjectionMatrix();
+
+			progress.setPixelSize(s.height);
+
 	  	}, 100);
 	};
 	window.addEventListener('resize', doResize);
@@ -184,21 +208,21 @@ window.addEventListener('load', () => {
 			camera.rotation.y = 0;
 			camera.rotation.z = 0;
 					
-			controls.target.set(0, 0, 0);			
+			controls.target.set(0, 0, 0);
 			controls.update();
 
 			mesh.rotation.x = 0;
-			mesh.rotation.y = 0;		
+			mesh.rotation.y = 0;
 		}
 
 		$scope.synthetize = function() {+
 			console.log('Synth request !');
-			$scope.nshapes = 0;
+			progress.init();
 			tstamp = new Date().getTime();
+			progress.visible = true;
 			myWorker.postMessage($scope.cmModel);
 		}
 
-		$scope.nshapes = 0;
 		var tstamp = 0;
 
 		var myWorker = new Worker("synthesizer-webworker.js");
@@ -206,7 +230,7 @@ window.addEventListener('load', () => {
 			var msg = e.data;
 			switch (msg.type) {
 				case 'progress':
-					$scope.nshapes = msg.nshapes;
+					progress.update(msg);
 					break;
 				case 'done':
 					renderer.setClearColor(new THREE.Color(msg.background));
@@ -214,6 +238,7 @@ window.addEventListener('load', () => {
 					geometry.addAttribute('position', new THREE.BufferAttribute(new Float32Array(msg.position), 3));
 					geometry.addAttribute('color', new THREE.BufferAttribute(new Float32Array(msg.color), 3 ));
 					geometry.center();
+					progress.visible = false;
 					mesh.geometry = geometry;
 					$scope.resetViewport();
 					console.log('Synth request processed in ' + (new Date().getTime() - tstamp) + 'ms');

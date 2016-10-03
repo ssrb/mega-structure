@@ -33,8 +33,12 @@ var tinycolor = require('./bower_components/tinycolor/tinycolor.js');
 import { Synthesizer } from './synthesizer';
 import { ShapeInstance } from './structure';
 
+interface GeoGenProgressFunc {
+	(ngenerated: number, done: boolean): void;
+}
+
 // Optimize: 2 pass: 1) compute ArrayBuffer size 2) populate without any alloc in critical loop, do not use THREE
-function GenerateGeometry(structure: ShapeInstance[]) : THREE.BufferGeometry {
+function GenerateGeometry(structure: ShapeInstance[], progress: GeoGenProgressFunc) : THREE.BufferGeometry {
 
 	var geometry = new THREE.Geometry();
 
@@ -80,8 +84,11 @@ function GenerateGeometry(structure: ShapeInstance[]) : THREE.BufferGeometry {
 				break;
 			case "sphere":
 				break;
-		}
+		};
+		progress(1 + si, false);
 	}
+
+	progress(structure.length, true);
 
 	var bgeometry = new THREE.BufferGeometry();
 	bgeometry.fromGeometry(geometry);
@@ -92,13 +99,16 @@ onmessage = function(e) {
 
 	var worker = this;
 
-	var lastChunk = 0;
-	var synth = new Synthesizer(e.data, (shapes : ShapeInstance[], done : boolean) => {
-		if (shapes.length - lastChunk >= 100 || done) {
-			this.postMessage({ type: 'progress', nshapes:shapes.length });
-			lastChunk = shapes.length;
-		}
-	});
+	var synth = new Synthesizer(e.data, (() => {
+			var nshapesLast = 0;
+			return (shapes : ShapeInstance[], done : boolean) => {
+				if (shapes.length - nshapesLast >= 100 || done) {
+					this.postMessage({ type: 'progress', nshapes:shapes.length, nprocessed:0});
+					nshapesLast = shapes.length;
+				}
+			};
+		}) ()
+	);
 
 	console.log('Synthesizing !');
 	var tstamp = new Date().getTime();
@@ -107,7 +117,17 @@ onmessage = function(e) {
 
 	console.log('Detailing geometry !');
 	tstamp = new Date().getTime();
-	var bgeo = GenerateGeometry(structure);
+	var bgeo = GenerateGeometry(structure, (() => {
+			var nshapesLast = 0;
+			return (nshapes : number, done : boolean) => {
+				if (nshapes - nshapesLast >= 100 || done) {
+					this.postMessage({ type: 'progress', nshapes:structure.length, nprocessed:nshapes});
+					nshapesLast = nshapes;
+				}
+			};
+		}) ()
+	);
+
 	console.log('Detailed in ' + (new Date().getTime() - tstamp) + 'ms');
 
 	console.log('Posting structure !');
