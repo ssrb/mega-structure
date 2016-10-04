@@ -26,7 +26,6 @@
 // either expressed or implied, of the FreeBSD Project.
 
 ///<reference path="typings/index.d.ts"/>
-var THREE = require('./bower_components/three.js/three.min.js');
 var glmat = require('./bower_components/gl-matrix/dist/gl-matrix-min.js');
 var tinycolor = require('./bower_components/tinycolor/tinycolor.js');
 
@@ -37,10 +36,21 @@ interface GeoGenProgressFunc {
 	(ngenerated: number, done: boolean): void;
 }
 
-// Optimize: 2 pass: 1) compute ArrayBuffer size 2) populate without any alloc in critical loop, do not use THREE
-function GenerateGeometry(structure: ShapeInstance[], progress: GeoGenProgressFunc) : THREE.BufferGeometry {
+function AllocBuffers(structure: ShapeInstance[], progress: GeoGenProgressFunc) : [Float32Array, Float32Array] {
+	var nverts = 0;
+	for (var si = 0; si < structure.length; ++si) {
+		switch (structure[si].shape) {
+			case "box":
+				nverts += 36;
+				break;
+		};
+	}
+	return [new Float32Array(3 * nverts), new Float32Array(3 * nverts)];
+}
 
-	var geometry = new THREE.Geometry();
+function GenerateGeometry(structure: ShapeInstance[], progress: GeoGenProgressFunc) : [Float32Array, Float32Array] {
+
+	var [position, color] = AllocBuffers(structure, progress);
 
 	var triangles = [0, 1, 2, 1, 2, 3,
 		4, 5, 6, 5, 6, 7,
@@ -49,50 +59,57 @@ function GenerateGeometry(structure: ShapeInstance[], progress: GeoGenProgressFu
 		0, 2, 4, 2, 4, 6,
 		1, 3, 5, 3, 5, 7];
 
-	var vertices = [0, 0, 0,
-		0, 0, 1,
-		0, 1, 0,
-		0, 1, 1,
-		1, 0, 0,
-		1, 0, 1,
-		1, 1, 0,
-		1, 1, 1];
+	var reference = [[0, 0, 0, 1],
+		[0, 0, 1, 1],
+		[0, 1, 0, 1],
+		[0, 1, 1, 1],
+		[1, 0, 0, 1],
+		[1, 0, 1, 1],
+		[1, 1, 0, 1],
+		[1, 1, 1,1 ]];
 
-	for (var vi = 0; vi < vertices.length; ++vi) {
-		vertices[vi] -= 0.5;
+	for (var vi = 0; vi < reference.length; ++vi) {
+		reference[vi][0] -= 0.5;
+		reference[vi][1] -= 0.5;
+		reference[vi][2] -= 0.5;
 	}
 
-	var vert = [0, 0, 0, 0];
+	var transformed = [[0, 0, 0, 1],
+		[0, 0, 0, 1],
+		[0, 0, 0, 1],
+		[0, 0, 0, 1],
+		[0, 0, 0, 1],
+		[0, 0, 0, 1],
+		[0, 0, 0, 1],
+		[0, 0, 0, 1]];
 
-	for (var si = 0; si < structure.length; ++si) {
-		var s = si * 8;
+	for (var si = 0, pi = 0, ci = 0; si < structure.length; ++si) {
+
+		progress(si, false);
+
 		var rgb = tinycolor(structure[si].colorspace).toRgb();
-		var color = new THREE.Color(rgb.r / 255, rgb.g / 255, rgb.b / 255);
 		switch (structure[si].shape) {
 			case "box":
-				for (var vi = 0; vi < vertices.length; vi += 3) {
-					glmat.vec4.transformMat4(vert, [vertices[vi], vertices[vi + 1], vertices[vi + 2], 1], structure[si].geospace);
-					geometry.vertices.push(new THREE.Vector3(vert[0], vert[1], vert[2]));
+				for (var vi = 0; vi < reference.length; ++vi) {
+					glmat.vec4.transformMat4(transformed[vi], reference[vi], structure[si].geospace);
 				}
-				for (var fi = 0; fi < triangles.length; fi += 3) {
-					var face = new THREE.Face3(triangles[fi] + s, triangles[fi + 1] + s, triangles[fi + 2] + s);
-					face.color = color;
-					geometry.faces.push(
-						face
-					);
+				for (var ti = 0; ti < triangles.length; ++ti) {
+					var vert = transformed[triangles[ti]];
+					position[pi++] = vert[0];
+					position[pi++] = vert[1];
+					position[pi++] = vert[2];
+					color[ci++] = rgb.r / 255;
+					color[ci++] = rgb.g / 255;
+					color[ci++] = rgb.b / 255;
+					// Alpha not supported yet
 				}
-				break;
-			case "sphere":
 				break;
 		};
-		progress(1 + si, false);
 	}
 
 	progress(structure.length, true);
 
-	var bgeometry = new THREE.BufferGeometry();
-	bgeometry.fromGeometry(geometry);
-	return bgeometry;
+	return [position, color];
 }
 
 onmessage = function(e) {
@@ -117,7 +134,7 @@ onmessage = function(e) {
 
 	console.log('Detailing geometry !');
 	tstamp = new Date().getTime();
-	var bgeo = GenerateGeometry(structure, (() => {
+	var [position, color] = GenerateGeometry(structure, (() => {
 			var nshapesLast = 0;
 			return (nshapes : number, done : boolean) => {
 				if (nshapes - nshapesLast >= 100 || done) {
@@ -132,14 +149,12 @@ onmessage = function(e) {
 
 	console.log('Posting structure !');
 	tstamp = new Date().getTime();
-	var position =  (<any>bgeo.getAttribute ('position')).array.buffer;
-	var color =  (<any>bgeo.getAttribute ('color')).array.buffer;
 	worker.postMessage({
 		type: 'done',
 		background:synth.background,
-		position: position,
-		color: color
-	}, [position, color]);
+		position: position.buffer,
+		color: color.buffer
+	}, [position.buffer, color.buffer]);
 	console.log('Posted in ' + (new Date().getTime() - tstamp) + 'ms');
 }
 
