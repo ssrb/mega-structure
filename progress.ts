@@ -30,6 +30,7 @@ export class Progress extends THREE.Mesh {
 	public constructor() {
 
 		var canvas = document.createElement('canvas');
+		canvas.width = canvas.height = 1024;
 		var texture = new THREE.Texture(canvas);
 
 		super(new THREE.PlaneBufferGeometry(1, 1), new THREE.MeshBasicMaterial( {
@@ -49,11 +50,15 @@ export class Progress extends THREE.Mesh {
 
 		this.nshapes = 0;
 		this.nprocessed = 0;
+
+		this.completeTick = -1;
 	}
 
 	public init() {
+		this.visible = true;
 		this.nshapes = 0;
 		this.nprocessed = 0;
+		this.completeTick = -1;
 	}
 
 	public update(msg: any) {
@@ -62,10 +67,29 @@ export class Progress extends THREE.Mesh {
 	}
 
 	public setPixelSize(size: number) {
-		this.canvas.width = this.canvas.height = size;
+		this.canvas.width = this.canvas.height = Math.pow(2, Math.ceil(Math.log(size) / Math.log(2)));
 	}
 
 	public animate(tick : number) {
+
+		var context = this.canvas.getContext('2d');
+		context.globalAlpha = 1;
+
+		var fadeoutStart = 500;
+		var fadeoutDuration = 1000;
+
+		if (this.nshapes > 0 && this.nprocessed == this.nshapes) {
+			if (this.completeTick == -1) {
+				this.completeTick = tick;
+			} else if (tick - this.completeTick < fadeoutStart) {
+			} else if (tick - this.completeTick < fadeoutStart + fadeoutDuration) {
+				context.globalAlpha = 1 - (tick - this.completeTick - fadeoutStart) / fadeoutDuration;
+			} else {
+				this.visible = false;
+			}
+		}
+
+		context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
 		var progressX = this.canvas.width / 2;
 		var progressY = this.canvas.height / 2;
@@ -75,9 +99,6 @@ export class Progress extends THREE.Mesh {
 		var textX = progressX;
 		var textY = progressY - 3 * halfProgressHeight;
 		var fontSize = 4 * halfProgressHeight + "px serif";
-
-		var context = this.canvas.getContext('2d');
-		context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
 		context.font = fontSize;
 		context.textAlign = "center";
@@ -118,5 +139,5 @@ export class Progress extends THREE.Mesh {
 	texture : THREE.Texture;
 	nshapes: number;
 	nprocessed: number;
-	lastTick : number;
+	completeTick : number;
 };
