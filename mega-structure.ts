@@ -174,79 +174,77 @@ window.addEventListener('load', () => {
 	};
 	window.addEventListener('resize', doResize);
 
-	var app: ng.IModule = angular.module('MegaStructure.App', ['ui.codemirror']);
 
-	app.controller('CodemirrorCtrl', ['$scope', function($scope) {	
-		$scope.examples = Object.keys(EisenScripts);
-		$scope.example = 'frameinframe';
-		$scope.exampleChanged = function() {
-			$scope.cmModel = EisenScripts[$scope.example];
+	var examples = Object.keys(EisenScripts);
+	var example = 'frameinframe';
+	var cmModel;
+	function exampleChanged() {
+		cmModel = EisenScripts[example];
+	}
+	exampleChanged();
+
+	// $scope.cmOption = {
+	// 		lineNumbers: true,
+	// 		matchBrackets: true,
+	// 		mode: 'eisen-script',
+	// 		theme: 'twilight'
+	// 	};
+
+	function toggleTurntable() {
+		turntable = !turntable;
+	}
+
+
+	function resetViewport() {
+		var bbox = mesh.geometry.boundingBox;
+		var diag = new THREE.Vector3();
+		diag.subVectors(bbox.max, bbox.min);
+		
+		camera.position.x = 0;
+		camera.position.y = 0;
+		camera.position.z = Math.max(diag.x, diag.y) / Math.tan(0.5 * camera.fov * Math.PI / 180);
+
+		camera.rotation.x = 0;
+		camera.rotation.y = 0;
+		camera.rotation.z = 0;
+				
+		controls.target.set(0, 0, 0);
+		controls.update();
+
+		mesh.rotation.x = 0;
+		mesh.rotation.y = 0;
+	}
+
+	function synthetize() {
+		console.log('Synth request !');
+		progress.init();
+		tstamp = new Date().getTime();
+		myWorker.postMessage(cmModel);
+	}
+
+	var tstamp = 0;
+
+	var myWorker = new Worker("synthesizer-webworker.js");
+	myWorker.onmessage = function(e) {
+		var msg = e.data;
+		switch (msg.type) {
+			case 'progress':
+				progress.update(msg);
+				break;
+			case 'done':
+				renderer.setClearColor(new THREE.Color(msg.background));
+				var geometry = new THREE.BufferGeometry();
+				geometry.addAttribute('position', new THREE.BufferAttribute(new Float32Array(msg.position), 3));
+				geometry.addAttribute('color', new THREE.BufferAttribute(new Float32Array(msg.color), 3));
+				geometry.center();
+				mesh.geometry = geometry;
+				resetViewport();
+				console.log('Synth request processed in ' + (new Date().getTime() - tstamp) + 'ms');
+				break;
 		}
-		$scope.exampleChanged();
+	}
 
-		$scope.cmOption = {
-			lineNumbers: true,
-			matchBrackets: true,
-			mode: 'eisen-script',
-			theme: 'twilight'
-		};
-
-		$scope.turntable = function() {
-			turntable = !turntable;
-		}
-
-		$scope.resetViewport = function() {
-			var bbox = mesh.geometry.boundingBox;
-			var diag = new THREE.Vector3();
-			diag.subVectors(bbox.max, bbox.min);
-			
-			camera.position.x = 0;
-			camera.position.y = 0;
-			camera.position.z = Math.max(diag.x, diag.y) / Math.tan(0.5 * camera.fov * Math.PI / 180);
-
-			camera.rotation.x = 0;
-			camera.rotation.y = 0;
-			camera.rotation.z = 0;
-					
-			controls.target.set(0, 0, 0);
-			controls.update();
-
-			mesh.rotation.x = 0;
-			mesh.rotation.y = 0;
-		}
-
-		$scope.synthetize = function() {+
-			console.log('Synth request !');
-			progress.init();
-			tstamp = new Date().getTime();
-			myWorker.postMessage($scope.cmModel);
-		}
-
-		var tstamp = 0;
-
-		var myWorker = new Worker("synthesizer-webworker.js");
-		myWorker.onmessage = function(e) {
-			var msg = e.data;
-			switch (msg.type) {
-				case 'progress':
-					progress.update(msg);
-					break;
-				case 'done':
-					renderer.setClearColor(new THREE.Color(msg.background));
-					var geometry = new THREE.BufferGeometry();
-					geometry.addAttribute('position', new THREE.BufferAttribute(new Float32Array(msg.position), 3));
-					geometry.addAttribute('color', new THREE.BufferAttribute(new Float32Array(msg.color), 3));
-					geometry.center();
-					mesh.geometry = geometry;
-					$scope.resetViewport();
-					console.log('Synth request processed in ' + (new Date().getTime() - tstamp) + 'ms');
-					break;
-			}
-			$scope.$apply();
-		}
-
-		$scope.synthetize();
-	}]);
+	synthetize();
 		
 	requestAnimationFrame(animate);
 	doResize();
