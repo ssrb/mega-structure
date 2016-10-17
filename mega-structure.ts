@@ -119,7 +119,7 @@ window.addEventListener('load', () => {
 	var turntable = true;
 
 	var lastTime = new Date().getTime();
-	function animate() : void {
+	function animate() {
 
 		var timeNow = new Date().getTime();
 		
@@ -145,56 +145,45 @@ window.addEventListener('load', () => {
 		lastTime = timeNow;
 	}
 
-	var resizeTimer;
-	function doResize() : void {
-		clearTimeout(resizeTimer);
-	  	resizeTimer = setTimeout(() => {
-	  		var doc = <any>document;
-			if (!doc.mozFullScreenElement && !doc.webkitFullscreenElement) {
-			    var w = view.offsetWidth, h = window.innerHeight - document.getElementById("header").offsetHeight;
-				w *= 0.95;
-				h *= 0.95;
-				renderer.setSize(w, h);
-				$(".CodeMirror").height(h + "px");
-			} else {
-				renderer.setSize(window.innerWidth, window.innerHeight);
-			}
+	function doResize() {
+  		var doc = <any>document;
+		if (!doc.mozFullScreenElement && !doc.webkitFullscreenElement) {
+		    var w = view.offsetWidth, h = window.innerHeight - document.getElementById("header").offsetHeight;
+			w *= 0.95;
+			h *= 0.95;
+			renderer.setSize(w, h);
+			$(".CodeMirror").height(h + "px");
+		} else {
+			renderer.setSize(window.innerWidth, window.innerHeight);
+		}
 
-			var s = renderer.getSize();
-			camera.aspect = s.width / s.height;
-			camera.updateProjectionMatrix();
+		var s = renderer.getSize();
+		camera.aspect = s.width / s.height;
+		camera.updateProjectionMatrix();
 
-			olaycam.left = -0.5 * camera.aspect;
-			olaycam.right = 0.5 * camera.aspect;
-			olaycam.updateProjectionMatrix();
+		olaycam.left = -0.5 * camera.aspect;
+		olaycam.right = 0.5 * camera.aspect;
+		olaycam.updateProjectionMatrix();
 
-			progress.setPixelSize(s.height);
-
-	  	}, 100);
+		progress.setPixelSize(s.height);
 	};
 	window.addEventListener('resize', doResize);
 
-	var examples = Object.keys(EisenScripts);
-	var example = 'frameinframe';
-	var cmModel;
-	function exampleChanged() {
-		cmModel = EisenScripts[example];
-	}
-	
-	
-	// $scope.cmOption = {
-	// 		lineNumbers: true,
-	// 		matchBrackets: true,
-	// 		mode: 'eisen-script',
-	// 		theme: 'twilight'
-	// 	};
+	var opts = {
+		lineNumbers: true,
+		matchBrackets: true,
+		mode: 'eisen-script',
+		theme: 'twilight'
+	};
+	var codeMirror = CodeMirror(document.getElementById("structure-code"), opts);
+
 	var tstamp = 0;
 
 	function synthetize() {
 		console.log('Synth request !');
 		progress.init();
 		tstamp = new Date().getTime();
-		myWorker.postMessage(cmModel);
+		myWorker.postMessage(codeMirror.getValue());
 	}
 
 	function resetViewport() {
@@ -217,14 +206,27 @@ window.addEventListener('load', () => {
 		mesh.rotation.y = 0;
 	}
 
-	function toggleTurntableBtn() {
+	function toggleTurntable() {
 		turntable = !turntable;
 	}
 
-	document.getElementById("examples").onchange = exampleChanged;
+	var exampleSelector = <HTMLSelectElement>document.getElementById("examples");
+ 
+	Object.keys(EisenScripts).forEach(e => {
+		var opt = document.createElement('option');
+		opt.value = opt.innerHTML = e;
+		exampleSelector.appendChild(opt);
+	});
+
+	function exampleChanged() {
+		codeMirror.setValue(EisenScripts[exampleSelector.value]);
+	}
+
+	exampleSelector.onchange = exampleChanged;
+	
 	document.getElementById("synthBtn").onclick = synthetize;
 	document.getElementById("resetViewportBtn").onclick = resetViewport;
-	document.getElementById("toggleTurntableBtn").onclick = toggleTurntableBtn;
+	document.getElementById("toggleTurntableBtn").onclick = toggleTurntable;
 
 	var myWorker = new Worker("synthesizer-webworker.js");
 	myWorker.onmessage = function(e) {
@@ -246,6 +248,7 @@ window.addEventListener('load', () => {
 		}
 	}
 
+	exampleSelector.value = 'frameinframe';
 	exampleChanged();
 	synthetize();
 	requestAnimationFrame(animate);

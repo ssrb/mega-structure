@@ -1,14 +1,15 @@
 {
   "name": "mega-structure",
   "globalDependencies": {
-    "pegjs": "github:DefinitelyTyped/DefinitelyTyped/pegjs/pegjs.d.ts#b45475991fee80533869ed86d70a96bf8d1aaf5b",
     "browserify": "github:DefinitelyTyped/DefinitelyTyped/browserify/browserify.d.ts#b45475991fee80533869ed86d70a96bf8d1aaf5b",
-    "node": "github:DefinitelyTyped/DefinitelyTyped/node/node.d.ts#b45475991fee80533869ed86d70a96bf8d1aaf5b",
+    "codemirror": "registry:dt/codemirror#0.0.0+20160619021621",
     "gl-matrix": "github:DefinitelyTyped/DefinitelyTyped/gl-matrix/gl-matrix.d.ts#85af69c91599a6c904618545f0613970e1ff3f64",
     "jquery": "github:DefinitelyTyped/DefinitelyTyped/jquery/jquery.d.ts#32345ecb1a86750733eea0ea16356963ec4a2f61",
+    "node": "github:DefinitelyTyped/DefinitelyTyped/node/node.d.ts#b45475991fee80533869ed86d70a96bf8d1aaf5b",
+    "pegjs": "github:DefinitelyTyped/DefinitelyTyped/pegjs/pegjs.d.ts#b45475991fee80533869ed86d70a96bf8d1aaf5b",
+    "seedrandom": "github:DefinitelyTyped/DefinitelyTyped/seedrandom/seedrandom.d.ts#b10e5ade29708bb0a7d21916a9fe289973520e89",
     "three": "github:DefinitelyTyped/DefinitelyTyped/threejs/three.d.ts#dade4414712ce84e3c63393f1aae407e9e7e6af7",
-    "tinycolor": "github:DefinitelyTyped/DefinitelyTyped/tinycolor/tinycolor.d.ts#dade4414712ce84e3c63393f1aae407e9e7e6af7",
     "three-orbitcontrols": "github:DefinitelyTyped/DefinitelyTyped/threejs/three-orbitcontrols.d.ts#dade4414712ce84e3c63393f1aae407e9e7e6af7",
-    "seedrandom": "github:DefinitelyTyped/DefinitelyTyped/seedrandom/seedrandom.d.ts#b10e5ade29708bb0a7d21916a9fe289973520e89"
+    "tinycolor": "github:DefinitelyTyped/DefinitelyTyped/tinycolor/tinycolor.d.ts#dade4414712ce84e3c63393f1aae407e9e7e6af7"
   }
 }
