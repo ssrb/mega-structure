@@ -69,7 +69,7 @@ window.addEventListener('load', () => {
 	var camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
 	camera.position.z = 1.5;
 	
-	var view = document.getElementById("structure-view");	
+	var view = document.getElementById("structure-view");
 	view.appendChild(renderer.domElement);
 
 	var scene = new THREE.Scene();
@@ -119,7 +119,7 @@ window.addEventListener('load', () => {
 	var turntable = true;
 
 	var lastTime = new Date().getTime();
-	function animate() : void {
+	function animate() {
 
 		var timeNow = new Date().getTime();
 		
@@ -145,109 +145,112 @@ window.addEventListener('load', () => {
 		lastTime = timeNow;
 	}
 
-	var resizeTimer;
-	function doResize() : void {
-		clearTimeout(resizeTimer);
-	  	resizeTimer = setTimeout(() => {
-	  		var doc = <any>document;
-			if (!doc.mozFullScreenElement && !doc.webkitFullscreenElement) {
-			    var w = view.offsetWidth, h = window.innerHeight - document.getElementById("header").offsetHeight;
-				w *= 0.95;
-				h *= 0.95;
-				renderer.setSize(w, h);
-				$(".CodeMirror").height(h + "px");
-			} else {
-				renderer.setSize(window.innerWidth, window.innerHeight);
-			}
+	function doResize() {
+  		var doc = <any>document;
+		if (!doc.mozFullScreenElement && !doc.webkitFullscreenElement) {
+		    var w = view.offsetWidth, h = window.innerHeight - document.getElementById("header").offsetHeight;
+			w *= 0.95;
+			h *= 0.95;
+			renderer.setSize(w, h);
+			$(".CodeMirror").height(h + "px");
+		} else {
+			renderer.setSize(window.innerWidth, window.innerHeight);
+		}
 
-			var s = renderer.getSize();
-			camera.aspect = s.width / s.height;
-			camera.updateProjectionMatrix();
+		var s = renderer.getSize();
+		camera.aspect = s.width / s.height;
+		camera.updateProjectionMatrix();
 
-			olaycam.left = -0.5 * camera.aspect;
-			olaycam.right = 0.5 * camera.aspect;
-			olaycam.updateProjectionMatrix();
+		olaycam.left = -0.5 * camera.aspect;
+		olaycam.right = 0.5 * camera.aspect;
+		olaycam.updateProjectionMatrix();
 
-			progress.setPixelSize(s.height);
-
-	  	}, 100);
+		progress.setPixelSize(s.height);
 	};
 	window.addEventListener('resize', doResize);
 
-	var app: ng.IModule = angular.module('MegaStructure.App', ['ui.codemirror']);
+	var opts = {
+		lineNumbers: true,
+		matchBrackets: true,
+		mode: 'eisen-script',
+		theme: 'twilight'
+	};
+	var codeMirror = CodeMirror(document.getElementById("structure-code"), opts);
 
-	app.controller('CodemirrorCtrl', ['$scope', function($scope) {	
-		$scope.examples = Object.keys(EisenScripts);
-		$scope.example = 'frameinframe';
-		$scope.exampleChanged = function() {
-			$scope.cmModel = EisenScripts[$scope.example];
-		}
-		$scope.exampleChanged();
+	var tstamp = 0;
 
-		$scope.cmOption = {
-			lineNumbers: true,
-			matchBrackets: true,
-			mode: 'eisen-script',
-			theme: 'twilight'
-		};
+	function synthetize() {
+		console.log('Synth request !');
+		progress.init();
+		tstamp = new Date().getTime();
+		myWorker.postMessage(codeMirror.getValue());
+	}
 
-		$scope.turntable = function() {
-			turntable = !turntable;
-		}
-
-		$scope.resetViewport = function() {
-			var bbox = mesh.geometry.boundingBox;
-			var diag = new THREE.Vector3();
-			diag.subVectors(bbox.max, bbox.min);
-			
-			camera.position.x = 0;
-			camera.position.y = 0;
-			camera.position.z = Math.max(diag.x, diag.y) / Math.tan(0.5 * camera.fov * Math.PI / 180);
-
-			camera.rotation.x = 0;
-			camera.rotation.y = 0;
-			camera.rotation.z = 0;
-					
-			controls.target.set(0, 0, 0);
-			controls.update();
-
-			mesh.rotation.x = 0;
-			mesh.rotation.y = 0;
-		}
-
-		$scope.synthetize = function() {+
-			console.log('Synth request !');
-			progress.init();
-			tstamp = new Date().getTime();
-			myWorker.postMessage($scope.cmModel);
-		}
-
-		var tstamp = 0;
-
-		var myWorker = new Worker("synthesizer-webworker.js");
-		myWorker.onmessage = function(e) {
-			var msg = e.data;
-			switch (msg.type) {
-				case 'progress':
-					progress.update(msg);
-					break;
-				case 'done':
-					renderer.setClearColor(new THREE.Color(msg.background));
-					var geometry = new THREE.BufferGeometry();
-					geometry.addAttribute('position', new THREE.BufferAttribute(new Float32Array(msg.position), 3));
-					geometry.addAttribute('color', new THREE.BufferAttribute(new Float32Array(msg.color), 3));
-					geometry.center();
-					mesh.geometry = geometry;
-					$scope.resetViewport();
-					console.log('Synth request processed in ' + (new Date().getTime() - tstamp) + 'ms');
-					break;
-			}
-			$scope.$apply();
-		}
-
-		$scope.synthetize();
-	}]);
+	function resetViewport() {
+		var bbox = mesh.geometry.boundingBox;
+		var diag = new THREE.Vector3();
+		diag.subVectors(bbox.max, bbox.min);
 		
+		camera.position.x = 0;
+		camera.position.y = 0;
+		camera.position.z = Math.max(diag.x, diag.y) / Math.tan(0.5 * camera.fov * Math.PI / 180);
+
+		camera.rotation.x = 0;
+		camera.rotation.y = 0;
+		camera.rotation.z = 0;
+				
+		controls.target.set(0, 0, 0);
+		controls.update();
+
+		mesh.rotation.x = 0;
+		mesh.rotation.y = 0;
+	}
+
+	function toggleTurntable() {
+		turntable = !turntable;
+	}
+
+	var exampleSelector = <HTMLSelectElement>document.getElementById("examples");
+ 
+	Object.keys(EisenScripts).forEach(e => {
+		var opt = document.createElement('option');
+		opt.value = opt.innerHTML = e;
+		exampleSelector.appendChild(opt);
+	});
+
+	function exampleChanged() {
+		codeMirror.setValue(EisenScripts[exampleSelector.value]);
+	}
+
+	exampleSelector.onchange = exampleChanged;
+	
+	document.getElementById("synthBtn").onclick = synthetize;
+	document.getElementById("resetViewportBtn").onclick = resetViewport;
+	document.getElementById("toggleTurntableBtn").onclick = toggleTurntable;
+
+	var myWorker = new Worker("synthesizer-webworker.js");
+	myWorker.onmessage = function(e) {
+		var msg = e.data;
+		switch (msg.type) {
+			case 'progress':
+				progress.update(msg);
+				break;
+			case 'done':
+				renderer.setClearColor(new THREE.Color(msg.background));
+				var geometry = new THREE.BufferGeometry();
+				geometry.addAttribute('position', new THREE.BufferAttribute(new Float32Array(msg.position), 3));
+				geometry.addAttribute('color', new THREE.BufferAttribute(new Float32Array(msg.color), 3));
+				geometry.center();
+				mesh.geometry = geometry;
+				resetViewport();
+				console.log('Synth request processed in ' + (new Date().getTime() - tstamp) + 'ms');
+				break;
+		}
+	}
+
+	exampleSelector.value = 'frameinframe';
+	exampleChanged();
+	synthetize();
 	requestAnimationFrame(animate);
 	doResize();
 });

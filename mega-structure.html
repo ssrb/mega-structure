@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" ng-app="MegaStructure.App">
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -19,10 +19,6 @@
 	<script type="text/javascript" src="bower_components/codemirror/lib/codemirror.js"></script>
 	<script type="text/javascript" src="bower_components/codemirror/addon/edit/matchbrackets.js"></script>
 	<script type="text/javascript" src="codemirror-eisen-script-mode.js"></script>
-	
-	<!-- Angular -->
-	<script type="text/javascript" src="bower_components/angular/angular.min.js"></script>
-	<script type="text/javascript" src="bower_components/angular-ui-codemirror/ui-codemirror.js"></script>	
 
 	<!-- Three -->
 	<script type="text/javascript" src="bower_components/three.js/three.min.js"></script>
@@ -51,7 +47,7 @@
 
 <body>
 
-<div class="container-fluid" ng-controller="CodemirrorCtrl">
+<div class="container-fluid">
 
 	<div id="header" class="row">
 
@@ -60,14 +56,14 @@
 			<div class="form-group"></div>
 
 			<div class="form-group">
-				<button ng-click="synthetize()" type="button" class="btn btn-success">Synthesize !</button>
-				<button ng-click="resetViewport()" type="button" class="btn">Reset viewport</button>
-				<button ng-click="turntable()" type="button" class="btn">Toggle turntable</button>
+				<button type="button" class="btn btn-success" id="synthBtn">Synthesize !</button>
+				<button type="button" class="btn" id="resetViewportBtn">Reset viewport</button>
+				<button type="button" class="btn" id="toggleTurntableBtn">Toggle turntable</button>
 			</div>
 
 			<div class="form-group">
 				<label for="examples">Example</label>
-				<select id="examples" ng-model="example" ng-options="e for e in examples" ng-change="exampleChanged()"></select>				
+				<select id="examples"></select>				
 			</div>	
 
 		</form>
@@ -82,9 +78,7 @@
 	</div>
 
 	<div class="row">
-		<div class="col-lg-4">     	      	  		  		
-			<ui-codemirror ui-codemirror="cmOption" ng-model="cmModel" id="structure-code"></ui-codemirror>				
-		</div>
+		<div class="col-lg-4" id="structure-code"></div>
     	<div class="col-lg-8" id="structure-view"></div>
   	</div>
 
