@@ -69,7 +69,7 @@ window.addEventListener('load', () => {
 	var camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
 	camera.position.z = 1.5;
 	
-	var view = document.getElementById("structure-view");	
+	var view = document.getElementById("structure-view");
 	view.appendChild(renderer.domElement);
 
 	var scene = new THREE.Scene();
@@ -174,26 +174,28 @@ window.addEventListener('load', () => {
 	};
 	window.addEventListener('resize', doResize);
 
-
 	var examples = Object.keys(EisenScripts);
 	var example = 'frameinframe';
 	var cmModel;
 	function exampleChanged() {
 		cmModel = EisenScripts[example];
 	}
-	exampleChanged();
-
+	
+	
 	// $scope.cmOption = {
 	// 		lineNumbers: true,
 	// 		matchBrackets: true,
 	// 		mode: 'eisen-script',
 	// 		theme: 'twilight'
 	// 	};
+	var tstamp = 0;
 
-	function toggleTurntable() {
-		turntable = !turntable;
+	function synthetize() {
+		console.log('Synth request !');
+		progress.init();
+		tstamp = new Date().getTime();
+		myWorker.postMessage(cmModel);
 	}
-
 
 	function resetViewport() {
 		var bbox = mesh.geometry.boundingBox;
@@ -215,14 +217,14 @@ window.addEventListener('load', () => {
 		mesh.rotation.y = 0;
 	}
 
-	function synthetize() {
-		console.log('Synth request !');
-		progress.init();
-		tstamp = new Date().getTime();
-		myWorker.postMessage(cmModel);
+	function toggleTurntableBtn() {
+		turntable = !turntable;
 	}
 
-	var tstamp = 0;
+	document.getElementById("examples").onchange = exampleChanged;
+	document.getElementById("synthBtn").onclick = synthetize;
+	document.getElementById("resetViewportBtn").onclick = resetViewport;
+	document.getElementById("toggleTurntableBtn").onclick = toggleTurntableBtn;
 
 	var myWorker = new Worker("synthesizer-webworker.js");
 	myWorker.onmessage = function(e) {
@@ -244,8 +246,8 @@ window.addEventListener('load', () => {
 		}
 	}
 
+	exampleChanged();
 	synthetize();
-		
 	requestAnimationFrame(animate);
 	doResize();
 });
