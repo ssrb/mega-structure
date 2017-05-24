@@ -53,7 +53,7 @@ gulp.task('.peg', function() {
 
 gulp.task('.examples', function(cb) {
     var exec = require('child_process').exec;
-    exec('./pack-examples.sh > examples-generated.ts', function (err, stdout, stderr) {
+    exec('bash ./pack-examples.sh > examples-generated.ts', function (err, stdout, stderr) {
     console.log(stdout);
     console.log(stderr);
     cb(err);
