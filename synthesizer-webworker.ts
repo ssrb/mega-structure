@@ -28,9 +28,72 @@
 ///<reference path="typings/index.d.ts"/>
 var glmat = require('./bower_components/gl-matrix/dist/gl-matrix-min.js');
 var tinycolor = require('./bower_components/tinycolor/tinycolor.js');
+import collections = require('./node_modules/typescript-collections');
 
 import { Synthesizer } from './synthesizer';
 import { ShapeInstance } from './structure';
+
+
+// A cube
+var cubetriangles = [0, 1, 2, 1, 2, 3,
+	4, 5, 6, 5, 6, 7,
+	0, 1, 4, 1, 4, 5,
+	2, 3, 6, 3, 6, 7,
+	0, 2, 4, 2, 4, 6,
+	1, 3, 5, 3, 5, 7];
+
+var cubevertices = [[0, 0, 0, 1],
+	[0, 0, 1, 1],
+	[0, 1, 0, 1],
+	[0, 1, 1, 1],
+	[1, 0, 0, 1],
+	[1, 0, 1, 1],
+	[1, 1, 0, 1],
+	[1, 1, 1,1 ]];
+
+// An ico-sphere
+var spheretriangles = [0, 4, 2, 2, 4, 1,
+	1, 4, 3, 3, 4, 0,
+	0, 2, 5, 2, 1, 5,
+	1, 3, 5, 3, 0, 5];
+
+var spherevertices = [[1, 0, 0, 1],
+	[-1, 0, 0, 1],
+	[ 0, 1, 0, 1],
+	[ 0,-1, 0, 1],
+	[ 0, 0, 1, 1],
+	[ 0, 0,-1, 1]];
+
+for (var vi = 0; vi < cubevertices.length; ++vi) {
+	cubevertices[vi][0] -= 0.5;
+	cubevertices[vi][1] -= 0.5;
+	cubevertices[vi][2] -= 0.5;
+}
+
+var cubetransformed = new Array<number[]>(cubevertices.length);
+for (var i = 0; i < cubetransformed.length; ++i)
+{
+	cubetransformed[i] = [0, 0, 0, 1];
+}
+
+for (var i = 0; i < 3; ++i)
+{
+	spheretriangles = Subdivide(spheretriangles, spherevertices);	
+}
+
+for (var vi = 0; vi < spherevertices.length; ++vi) 
+{
+	spherevertices[vi][0] /= 2;
+	spherevertices[vi][1] /= 2;
+	spherevertices[vi][2] /= 2;
+}
+
+var sphereretransformed = new Array<number[]>(spherevertices.length);
+for (var i = 0; i < sphereretransformed.length; ++i)
+{
+	sphereretransformed[i] = [0, 0, 0, 1];
+}
+
 
 interface GeoGenProgressFunc {
 	(ngenerated: number, done: boolean): void;
@@ -43,45 +106,111 @@ function AllocBuffers(structure: ShapeInstance[], progress: GeoGenProgressFunc) 
 			case "box":
 				nverts += 36;
 				break;
+			case "sphere":
+				nverts += 4 * 4 * 4 * 24;
+				break;
 		};
 	}
 	return [new Float32Array(3 * nverts), new Float32Array(3 * nverts)];
 }
 
+function GenerateShapeGeometry(
+	triangles: number[], 
+	reference: number[][], 
+	transformed: number[][], 
+	transform: Float32Array, 
+	rgb: any, 
+	position: Float32Array, 
+	color: Float32Array,
+	pi: number,
+	ci: number
+) : [number, number]
+{
+	for (var vi = 0; vi < reference.length; ++vi) {
+		glmat.vec4.transformMat4(transformed[vi], reference[vi], transform);
+	}
+	for (var ti = 0; ti < triangles.length; ++ti) {
+		var vert = transformed[triangles[ti]];
+		position[pi++] = vert[0];
+		position[pi++] = vert[1];
+		position[pi++] = vert[2];
+		color[ci++] = rgb.r / 255;
+		color[ci++] = rgb.g / 255;
+		color[ci++] = rgb.b / 255;
+		// Alpha not supported yet
+	}
+	return [pi, ci];
+}
+
+function VertexForEdge(
+	edges: collections.Dictionary< [number, number], number>,
+	vertices: number[][],
+	v0: number,
+	v1: number
+)
+{
+	if (v0 > v1)
+	{
+		var tmp = v1;
+		v1 = v0;
+		v0 = tmp;
+	}
+
+	var vmid = edges.getValue([v0, v1]);
+
+	if (undefined == vmid)
+	{
+		var vmid = vertices.length;
+		edges.setValue([v0, v1], vmid);
+
+		var v = [0, 0, 0, 1];
+		glmat.vec3.add(v, vertices[v0], vertices[v1])
+		glmat.vec3.normalize(v, v);
+		vertices.push(v);	
+	}
+
+	return vmid;
+}
+
+function Subdivide(
+	triangles: number[],
+	vertices: number[][]
+) : number[] 
+{
+	var edges = new collections.Dictionary< [number, number], number>();
+	var result = [];
+
+	for (var ti = 0; ti < triangles.length; ti += 3)
+	{
+		var vmid = [0, 0, 0];
+		for (var edgei = 0; edgei < 3; ++edgei)
+		{
+			vmid[edgei] = VertexForEdge(edges, vertices, triangles[ti + edgei], triangles[ti + (edgei + 1) % 3]);
+		}
+
+		result.push(triangles[ti]);
+		result.push(vmid[0]);
+		result.push(vmid[2]);
+
+		result.push(triangles[ti + 1]);
+		result.push(vmid[1]);
+		result.push(vmid[0]);
+
+		result.push(triangles[ti + 2]);
+		result.push(vmid[2]);
+		result.push(vmid[1]);
+
+		result.push(vmid[0]);
+		result.push(vmid[1]);
+		result.push(vmid[2]);
+	}
+
+	return result;
+}
+
 function GenerateGeometry(structure: ShapeInstance[], progress: GeoGenProgressFunc) : [Float32Array, Float32Array] {
 
 	var [position, color] = AllocBuffers(structure, progress);
-
-	var triangles = [0, 1, 2, 1, 2, 3,
-		4, 5, 6, 5, 6, 7,
-		0, 1, 4, 1, 4, 5,
-		2, 3, 6, 3, 6, 7,
-		0, 2, 4, 2, 4, 6,
-		1, 3, 5, 3, 5, 7];
-
-	var reference = [[0, 0, 0, 1],
-		[0, 0, 1, 1],
-		[0, 1, 0, 1],
-		[0, 1, 1, 1],
-		[1, 0, 0, 1],
-		[1, 0, 1, 1],
-		[1, 1, 0, 1],
-		[1, 1, 1,1 ]];
-
-	for (var vi = 0; vi < reference.length; ++vi) {
-		reference[vi][0] -= 0.5;
-		reference[vi][1] -= 0.5;
-		reference[vi][2] -= 0.5;
-	}
-
-	var transformed = [[0, 0, 0, 1],
-		[0, 0, 0, 1],
-		[0, 0, 0, 1],
-		[0, 0, 0, 1],
-		[0, 0, 0, 1],
-		[0, 0, 0, 1],
-		[0, 0, 0, 1],
-		[0, 0, 0, 1]];
 
 	for (var si = 0, pi = 0, ci = 0; si < structure.length; ++si) {
 
@@ -90,20 +219,11 @@ function GenerateGeometry(structure: ShapeInstance[], progress: GeoGenProgressFu
 		var rgb = tinycolor(structure[si].colorspace).toRgb();
 		switch (structure[si].shape) {
 			case "box":
-				for (var vi = 0; vi < reference.length; ++vi) {
-					glmat.vec4.transformMat4(transformed[vi], reference[vi], structure[si].geospace);
-				}
-				for (var ti = 0; ti < triangles.length; ++ti) {
-					var vert = transformed[triangles[ti]];
-					position[pi++] = vert[0];
-					position[pi++] = vert[1];
-					position[pi++] = vert[2];
-					color[ci++] = rgb.r / 255;
-					color[ci++] = rgb.g / 255;
-					color[ci++] = rgb.b / 255;
-					// Alpha not supported yet
-				}
+				[pi, ci] = GenerateShapeGeometry(cubetriangles, cubevertices, cubetransformed, structure[si].geospace, rgb, position, color, pi, ci);
 				break;
+			case "sphere":
+				[pi, ci] = GenerateShapeGeometry(spheretriangles, spherevertices, sphereretransformed, structure[si].geospace, rgb, position, color, pi, ci);
+				break
 		};
 	}
 
