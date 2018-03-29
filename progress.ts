@@ -25,6 +25,8 @@
 // of the authors and should not be interpreted as representing official policies,
 // either expressed or implied, of the FreeBSD Project.
 
+import * as THREE from 'three';
+
 export class Progress extends THREE.Mesh {
 
 	public constructor() {
@@ -33,7 +35,7 @@ export class Progress extends THREE.Mesh {
 		canvas.width = canvas.height = 1024;
 		var texture = new THREE.Texture(canvas);
 
-		super(new THREE.PlaneBufferGeometry(1, 1), new THREE.MeshBasicMaterial( {
+		super(new THREE.PlaneBufferGeometry(1, 1), new THREE.MeshBasicMaterial({
 			map: texture,
 			depthWrite: false,
 			depthTest: false,
@@ -70,7 +72,7 @@ export class Progress extends THREE.Mesh {
 		this.canvas.width = this.canvas.height = Math.pow(2, Math.ceil(Math.log(size) / Math.log(2)));
 	}
 
-	public animate(tick : number) {
+	public animate(tick: number) {
 
 		var context = this.canvas.getContext('2d');
 		context.globalAlpha = 1;
@@ -135,9 +137,9 @@ export class Progress extends THREE.Mesh {
 		this.texture.needsUpdate = true;
 	}
 
-	canvas : HTMLCanvasElement;
-	texture : THREE.Texture;
+	canvas: HTMLCanvasElement;
+	texture: THREE.Texture;
 	nshapes: number;
 	nprocessed: number;
-	completeTick : number;
+	completeTick: number;
 };

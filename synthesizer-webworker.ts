@@ -25,7 +25,6 @@
 // of the authors and should not be interpreted as representing official policies,
 // either expressed or implied, of the FreeBSD Project.
 
-///<reference path="typings/index.d.ts"/>
 var glmat = require('./bower_components/gl-matrix/dist/gl-matrix-min.js');
 var tinycolor = require('./bower_components/tinycolor/tinycolor.js');
 import collections = require('./node_modules/typescript-collections');
@@ -33,6 +32,7 @@ import collections = require('./node_modules/typescript-collections');
 import { Synthesizer } from './synthesizer';
 import { ShapeInstance } from './structure';
 
+var targetOrigin = "Synthesizer";
 
 // A cube
 var cubetriangles = [0, 1, 2, 1, 2, 3,
@@ -43,13 +43,13 @@ var cubetriangles = [0, 1, 2, 1, 2, 3,
 	1, 3, 5, 3, 5, 7];
 
 var cubevertices = [[0, 0, 0, 1],
-	[0, 0, 1, 1],
-	[0, 1, 0, 1],
-	[0, 1, 1, 1],
-	[1, 0, 0, 1],
-	[1, 0, 1, 1],
-	[1, 1, 0, 1],
-	[1, 1, 1,1 ]];
+[0, 0, 1, 1],
+[0, 1, 0, 1],
+[0, 1, 1, 1],
+[1, 0, 0, 1],
+[1, 0, 1, 1],
+[1, 1, 0, 1],
+[1, 1, 1, 1]];
 
 // An ico-sphere
 var spheretriangles = [0, 4, 2, 2, 4, 1,
@@ -58,11 +58,11 @@ var spheretriangles = [0, 4, 2, 2, 4, 1,
 	1, 3, 5, 3, 0, 5];
 
 var spherevertices = [[1, 0, 0, 1],
-	[-1, 0, 0, 1],
-	[ 0, 1, 0, 1],
-	[ 0,-1, 0, 1],
-	[ 0, 0, 1, 1],
-	[ 0, 0,-1, 1]];
+[-1, 0, 0, 1],
+[0, 1, 0, 1],
+[0, -1, 0, 1],
+[0, 0, 1, 1],
+[0, 0, -1, 1]];
 
 for (var vi = 0; vi < cubevertices.length; ++vi) {
 	cubevertices[vi][0] -= 0.5;
@@ -71,26 +71,22 @@ for (var vi = 0; vi < cubevertices.length; ++vi) {
 }
 
 var cubetransformed = new Array<number[]>(cubevertices.length);
-for (var i = 0; i < cubetransformed.length; ++i)
-{
+for (var i = 0; i < cubetransformed.length; ++i) {
 	cubetransformed[i] = [0, 0, 0, 1];
 }
 
-for (var i = 0; i < 3; ++i)
-{
-	spheretriangles = Subdivide(spheretriangles, spherevertices);	
+for (var i = 0; i < 3; ++i) {
+	spheretriangles = Subdivide(spheretriangles, spherevertices);
 }
 
-for (var vi = 0; vi < spherevertices.length; ++vi) 
-{
+for (var vi = 0; vi < spherevertices.length; ++vi) {
 	spherevertices[vi][0] /= 2;
 	spherevertices[vi][1] /= 2;
 	spherevertices[vi][2] /= 2;
 }
 
 var sphereretransformed = new Array<number[]>(spherevertices.length);
-for (var i = 0; i < sphereretransformed.length; ++i)
-{
+for (var i = 0; i < sphereretransformed.length; ++i) {
 	sphereretransformed[i] = [0, 0, 0, 1];
 }
 
@@ -99,7 +95,7 @@ interface GeoGenProgressFunc {
 	(ngenerated: number, done: boolean): void;
 }
 
-function AllocBuffers(structure: ShapeInstance[], progress: GeoGenProgressFunc) : [Float32Array, Float32Array] {
+function AllocBuffers(structure: ShapeInstance[], progress: GeoGenProgressFunc): [Float32Array, Float32Array] {
 	var nverts = 0;
 	for (var si = 0; si < structure.length; ++si) {
 		switch (structure[si].shape) {
@@ -115,17 +111,16 @@ function AllocBuffers(structure: ShapeInstance[], progress: GeoGenProgressFunc) 
 }
 
 function GenerateShapeGeometry(
-	triangles: number[], 
-	reference: number[][], 
-	transformed: number[][], 
-	transform: Float32Array, 
-	rgb: any, 
-	position: Float32Array, 
+	triangles: number[],
+	reference: number[][],
+	transformed: number[][],
+	transform: Float32Array,
+	rgb: any,
+	position: Float32Array,
 	color: Float32Array,
 	pi: number,
 	ci: number
-) : [number, number]
-{
+): [number, number] {
 	for (var vi = 0; vi < reference.length; ++vi) {
 		glmat.vec4.transformMat4(transformed[vi], reference[vi], transform);
 	}
@@ -143,14 +138,12 @@ function GenerateShapeGeometry(
 }
 
 function VertexForEdge(
-	edges: collections.Dictionary< [number, number], number>,
+	edges: collections.Dictionary<[number, number], number>,
 	vertices: number[][],
 	v0: number,
 	v1: number
-)
-{
-	if (v0 > v1)
-	{
+) {
+	if (v0 > v1) {
 		var tmp = v1;
 		v1 = v0;
 		v0 = tmp;
@@ -158,15 +151,14 @@ function VertexForEdge(
 
 	var vmid = edges.getValue([v0, v1]);
 
-	if (undefined == vmid)
-	{
+	if (undefined == vmid) {
 		var vmid = vertices.length;
 		edges.setValue([v0, v1], vmid);
 
 		var v = [0, 0, 0, 1];
 		glmat.vec3.add(v, vertices[v0], vertices[v1])
 		glmat.vec3.normalize(v, v);
-		vertices.push(v);	
+		vertices.push(v);
 	}
 
 	return vmid;
@@ -175,16 +167,13 @@ function VertexForEdge(
 function Subdivide(
 	triangles: number[],
 	vertices: number[][]
-) : number[] 
-{
-	var edges = new collections.Dictionary< [number, number], number>();
+): number[] {
+	var edges = new collections.Dictionary<[number, number], number>();
 	var result = [];
 
-	for (var ti = 0; ti < triangles.length; ti += 3)
-	{
+	for (var ti = 0; ti < triangles.length; ti += 3) {
 		var vmid = [0, 0, 0];
-		for (var edgei = 0; edgei < 3; ++edgei)
-		{
+		for (var edgei = 0; edgei < 3; ++edgei) {
 			vmid[edgei] = VertexForEdge(edges, vertices, triangles[ti + edgei], triangles[ti + (edgei + 1) % 3]);
 		}
 
@@ -208,7 +197,7 @@ function Subdivide(
 	return result;
 }
 
-function GenerateGeometry(structure: ShapeInstance[], progress: GeoGenProgressFunc) : [Float32Array, Float32Array] {
+function GenerateGeometry(structure: ShapeInstance[], progress: GeoGenProgressFunc): [Float32Array, Float32Array] {
 
 	var [position, color] = AllocBuffers(structure, progress);
 
@@ -232,19 +221,19 @@ function GenerateGeometry(structure: ShapeInstance[], progress: GeoGenProgressFu
 	return [position, color];
 }
 
-onmessage = function(e) {
+onmessage = function (e) {
 
 	var worker = this;
 
 	var synth = new Synthesizer(e.data, (() => {
-			var nshapesLast = 0;
-			return (shapes : ShapeInstance[], done : boolean) => {
-				if (shapes.length - nshapesLast >= 100 || done) {
-					this.postMessage({ type: 'progress', nshapes:shapes.length, nprocessed:0});
-					nshapesLast = shapes.length;
-				}
-			};
-		}) ()
+		var nshapesLast = 0;
+		return (shapes: ShapeInstance[], done: boolean) => {
+			if (shapes.length - nshapesLast >= 100 || done) {
+				this.postMessage({ type: 'progress', nshapes: shapes.length, nprocessed: 0 }, targetOrigin);
+				nshapesLast = shapes.length;
+			}
+		};
+	})()
 	);
 
 	console.log('Synthesizing !');
@@ -255,14 +244,14 @@ onmessage = function(e) {
 	console.log('Detailing geometry !');
 	tstamp = new Date().getTime();
 	var [position, color] = GenerateGeometry(structure, (() => {
-			var nshapesLast = 0;
-			return (nshapes : number, done : boolean) => {
-				if (nshapes - nshapesLast >= 100 || done) {
-					this.postMessage({ type: 'progress', nshapes:structure.length, nprocessed:nshapes});
-					nshapesLast = nshapes;
-				}
-			};
-		}) ()
+		var nshapesLast = 0;
+		return (nshapes: number, done: boolean) => {
+			if (nshapes - nshapesLast >= 100 || done) {
+				this.postMessage({ type: 'progress', nshapes: structure.length, nprocessed: nshapes }, targetOrigin);
+				nshapesLast = nshapes;
+			}
+		};
+	})()
 	);
 
 	console.log('Detailed in ' + (new Date().getTime() - tstamp) + 'ms');
@@ -271,10 +260,10 @@ onmessage = function(e) {
 	tstamp = new Date().getTime();
 	worker.postMessage({
 		type: 'done',
-		background:synth.background,
+		background: synth.background,
 		position: position.buffer,
 		color: color.buffer
-	}, [position.buffer, color.buffer]);
+	}, targetOrigin, [position.buffer, color.buffer]);
 	console.log('Posted in ' + (new Date().getTime() - tstamp) + 'ms');
 }
 

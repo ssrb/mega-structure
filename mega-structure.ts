@@ -24,13 +24,13 @@
 // The views and conclusions contained in the software and documentation are those
 // of the authors and should not be interpreted as representing official policies,
 // either expressed or implied, of the FreeBSD Project.
-
-///<reference path="typings/index.d.ts"/>
+import * as THREE from 'three';
+import * as CodeMirror from 'codemirror';
 import EisenScripts = require('./examples-generated');
 import { ShapeInstance } from './structure';
 import { Progress } from './progress';
 
-var renderer : THREE.WebGLRenderer;
+var renderer: THREE.WebGLRenderer;
 
 function toggleFullScreen() {
 	var doc = <any>document;
@@ -51,7 +51,7 @@ function toggleFullScreen() {
 }
 
 window.addEventListener('load', () => {
-		
+
 	document.addEventListener("keydown", e => {
 		if (e.keyCode == 122) {
 			e.preventDefault();
@@ -68,7 +68,7 @@ window.addEventListener('load', () => {
 
 	var camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
 	camera.position.z = 1.5;
-	
+
 	var view = document.getElementById("structure-view");
 	view.appendChild(renderer.domElement);
 
@@ -86,13 +86,13 @@ window.addEventListener('load', () => {
 		new THREE.MeshPhongMaterial({
 			vertexColors: THREE.FaceColors,
 			side: THREE.DoubleSide,
-			shading: THREE.FlatShading
+			flatShading: true
 		});
 
 	var mesh = new THREE.Mesh(
-			new THREE.BoxGeometry(0, 0, 0),
-			material
-		);
+		new THREE.BoxGeometry(0, 0, 0),
+		material
+	);
 
 	scene.add(mesh);
 
@@ -111,8 +111,8 @@ window.addEventListener('load', () => {
 	scene.add(lights[0]);
 	scene.add(lights[1]);
 	scene.add(lights[2]);
-	
-	var controls = new THREE.OrbitControls(camera, renderer.domElement);	
+
+	var controls = new THREE.OrbitControls(camera, renderer.domElement);
 	controls.enableKeys = false;
 	controls.target.set(0, 0, 0);
 
@@ -122,14 +122,14 @@ window.addEventListener('load', () => {
 	function animate() {
 
 		var timeNow = new Date().getTime();
-		
+
 		if (turntable) {
 			var dt = (timeNow - lastTime) / (60 * 1000);
 			var dtheta = 2 * Math.PI * 1 * dt
 			mesh.rotation.x += dtheta;
 			mesh.rotation.y += dtheta;
 		}
-		
+
 		renderer.clear(true, true, true);
 		renderer.render(scene, camera);
 
@@ -146,9 +146,9 @@ window.addEventListener('load', () => {
 	}
 
 	function doResize() {
-  		var doc = <any>document;
+		var doc = <any>document;
 		if (!doc.mozFullScreenElement && !doc.webkitFullscreenElement) {
-		    var w = view.offsetWidth, h = window.innerHeight - document.getElementById("header").offsetHeight;
+			var w = view.offsetWidth, h = window.innerHeight - document.getElementById("header").offsetHeight;
 			w *= 0.95;
 			h *= 0.95;
 			renderer.setSize(w, h);
@@ -190,7 +190,7 @@ window.addEventListener('load', () => {
 		var bbox = mesh.geometry.boundingBox;
 		var diag = new THREE.Vector3();
 		diag.subVectors(bbox.max, bbox.min);
-		
+
 		camera.position.x = 0;
 		camera.position.y = 0;
 		camera.position.z = Math.max(diag.x, diag.y) / Math.tan(0.5 * camera.fov * Math.PI / 180);
@@ -198,7 +198,7 @@ window.addEventListener('load', () => {
 		camera.rotation.x = 0;
 		camera.rotation.y = 0;
 		camera.rotation.z = 0;
-				
+
 		controls.target.set(0, 0, 0);
 		controls.update();
 
@@ -211,7 +211,7 @@ window.addEventListener('load', () => {
 	}
 
 	var exampleSelector = <HTMLSelectElement>document.getElementById("examples");
- 
+
 	Object.keys(EisenScripts).forEach(e => {
 		var opt = document.createElement('option');
 		opt.value = opt.innerHTML = e;
@@ -223,13 +223,13 @@ window.addEventListener('load', () => {
 	}
 
 	exampleSelector.onchange = exampleChanged;
-	
+
 	document.getElementById("synthBtn").onclick = synthetize;
 	document.getElementById("resetViewportBtn").onclick = resetViewport;
 	document.getElementById("toggleTurntableBtn").onclick = toggleTurntable;
 
 	var myWorker = new Worker("synthesizer-webworker.js");
-	myWorker.onmessage = function(e) {
+	myWorker.onmessage = function (e) {
 		var msg = e.data;
 		switch (msg.type) {
 			case 'progress':

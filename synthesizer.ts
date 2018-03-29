@@ -25,7 +25,6 @@
 // of the authors and should not be interpreted as representing official policies,
 // either expressed or implied, of the FreeBSD Project.
 
-///<reference path="typings/index.d.ts"/>
 var eisenscript = require('./eisen-script');
 var glmat = require('./bower_components/gl-matrix/dist/gl-matrix-min.js');
 var tinycolor = require('./bower_components/tinycolor/dist/tinycolor-min.js');
@@ -125,7 +124,7 @@ interface SynthFrame {
 	colorspace: ColorFormats.HSVA;
 }
 
-function clamp(value: number, min : number, max : number) : number {
+function clamp(value: number, min: number, max: number): number {
 	return Math.min(Math.max(value, min), max);
 };
 
@@ -162,7 +161,7 @@ export class Synthesizer {
 		this.progress = progress;
 	}
 
-	private static indexRules(ast: ASTNode[]): collections.Dictionary<string, [number, DefStatement[]]> {		
+	private static indexRules(ast: ASTNode[]): collections.Dictionary<string, [number, DefStatement[]]> {
 		var index = new collections.Dictionary<string, [number, DefStatement[]]>();
 		for (var si = 0; si < ast.length; ++si) {
 			if (ast[si].type == "def") {
@@ -176,11 +175,11 @@ export class Synthesizer {
 				wclauses[1].push(def);
 			}
 		}
-		index.forEach(function(rule: string, wclauses: [number, DefStatement[]]): void {
-			wclauses[1].sort(function(left: DefStatement, right: DefStatement): number {
+		index.forEach(function (rule: string, wclauses: [number, DefStatement[]]): void {
+			wclauses[1].sort(function (left: DefStatement, right: DefStatement): number {
 				return left.weight - right.weight;
 			});
-		});		
+		});
 		return index;
 	}
 
@@ -193,15 +192,15 @@ export class Synthesizer {
 			if (guess < 0) {
 				return clause;
 			}
-		}		
+		}
 	}
 
-	public synthesize() : ShapeInstance[] {
+	public synthesize(): ShapeInstance[] {
 		var shapes = new Array<ShapeInstance>();
-				
+
 		for (var si = 0; si < this.ast.length; ++si) {
 			switch (this.ast[si].type) {
-				case "invoc":	
+				case "invoc":
 					this.synthesizeOne(<InvocStatement>this.ast[si], shapes);
 					break;
 				case "maxobjects":
@@ -209,7 +208,7 @@ export class Synthesizer {
 					break;
 				case "maxdepth":
 					this.maxDepth = (<MaxNode>this.ast[si]).max;
-					break;	
+					break;
 				case "background":
 					this.background = tinycolor((<ColorNode>this.ast[si]).color).toHexString();
 					break;
@@ -224,18 +223,18 @@ export class Synthesizer {
 					break;
 			}
 		}
-		
+
 		this.progress(shapes, true);
 
 		return shapes;
 	}
 
-	private synthesizeOne(prod: InvocStatement, shapes: ShapeInstance[]) : void {
+	private synthesizeOne(prod: InvocStatement, shapes: ShapeInstance[]): void {
 
 		var queue = new collections.Queue<SynthFrame>();
 
 		this.synthProduction(prod, 0, new collections.Dictionary<number, number>(), glmat.mat4.create(), tinycolor("RED").toHsv(), queue, shapes);
-		
+
 		while (!queue.isEmpty()) {
 
 			var { rule, globalDepth, clauseDepthMap, geospace, colorspace } = queue.dequeue();
@@ -248,24 +247,25 @@ export class Synthesizer {
 			var clause = this.pickClause(rule);
 
 			var clauseDepthMapCopy = new collections.Dictionary<number, number>();
-			clauseDepthMap.forEach(function(key: number, value: number) {
+			clauseDepthMap.forEach(function (key: number, value: number) {
 				clauseDepthMapCopy.setValue(key, value);
 			});
 
 			if (clause.maxdepth >= 0) {
 
 				var thisClauseDepth = clauseDepthMapCopy.getValue(clause.id);
-				
+
 				if (undefined == thisClauseDepth) {
 					thisClauseDepth = 0;
 				}
 
 				if (thisClauseDepth >= clause.maxdepth) {
-					if (clause.failover) {						
-						queue.enqueue({ rule: clause.failover, 
-							globalDepth: globalDepth + 1, 
-							clauseDepthMap: clauseDepthMapCopy, 
-							geospace, colorspace 
+					if (clause.failover) {
+						queue.enqueue({
+							rule: clause.failover,
+							globalDepth: globalDepth + 1,
+							clauseDepthMap: clauseDepthMapCopy,
+							geospace, colorspace
 						});
 					}
 					continue;
@@ -273,7 +273,7 @@ export class Synthesizer {
 					clauseDepthMapCopy.setValue(clause.id, thisClauseDepth + 1);
 				}
 			}
-						
+
 			for (var pi = 0; pi < clause.production.length; ++pi) {
 				this.synthProduction(clause.production[pi], globalDepth, clauseDepthMapCopy, geospace, colorspace, queue, shapes);
 
@@ -286,12 +286,12 @@ export class Synthesizer {
 	}
 
 	private synthProduction(prod: InvocStatement,
-							globalDepth: number,
-							clauseDepthMap: collections.Dictionary<number, number>, 
-							geospace: Float32Array, 
-							colorspace: ColorFormats.HSVA, 
-							queue: collections.Queue<SynthFrame>, 
-							shapes: ShapeInstance[]) : void {
+		globalDepth: number,
+		clauseDepthMap: collections.Dictionary<number, number>,
+		geospace: Float32Array,
+		colorspace: ColorFormats.HSVA,
+		queue: collections.Queue<SynthFrame>,
+		shapes: ShapeInstance[]): void {
 
 		var [childGeospaces, childColorspaces] = this.transform(prod.transformations, geospace, colorspace);
 
@@ -327,7 +327,7 @@ export class Synthesizer {
 	}
 
 	private transform(transforms: Transformation[], geospace: Float32Array, colorspace: ColorFormats.HSVA): [Float32Array[], ColorFormats.HSVA[]] {
-				
+
 		var childGeospaces = new Array<Float32Array>();
 		var childColorspaces = new Array<ColorFormats.HSVA>();
 
@@ -344,7 +344,7 @@ export class Synthesizer {
 			} else {
 				childGeospaces.push(childGeospace);
 				childColorspaces.push(childColorSpace);
-			} 			
+			}
 		};
 
 		return [childGeospaces, childColorspaces];
@@ -383,10 +383,10 @@ export class Synthesizer {
 				case "matrix":
 					var matrix = <MatrixNode>sequence[si];
 
-					var m = [matrix.m[0], matrix.m[1], matrix.m[2], 0, 
-							matrix.m[3], matrix.m[4], matrix.m[5], 0,
-							matrix.m[6], matrix.m[7], matrix.m[8], 0,
-							0, 0, 0, 1];
+					var m = [matrix.m[0], matrix.m[1], matrix.m[2], 0,
+					matrix.m[3], matrix.m[4], matrix.m[5], 0,
+					matrix.m[6], matrix.m[7], matrix.m[8], 0,
+						0, 0, 0, 1];
 
 					glmat.mat4.multiply(childGeospace, childGeospace, m);
 					break;
@@ -398,10 +398,10 @@ export class Synthesizer {
 					var sat = <SatNode>sequence[si];
 					childColorspace.s = clamp(childColorspace.s * sat.s, 0, 1);
 					break;
-				case "hue":	
+				case "hue":
 					var hue = <HueNode>sequence[si];
-					childColorspace.h = normalizeAngle(childColorspace.h + hue.h, 0);					
-					break;			
+					childColorspace.h = normalizeAngle(childColorspace.h + hue.h, 0);
+					break;
 				case "brightness":
 					var brightness = <BrightnessNode>sequence[si];
 					childColorspace.v = clamp(childColorspace.v * brightness.v, 0, 1);
@@ -409,7 +409,7 @@ export class Synthesizer {
 				case "alpha":
 					var alpha = <AlphaNode>sequence[si];
 					childColorspace.a = clamp(childColorspace.a * alpha.a, 0, 1);
-					break;	
+					break;
 			}
 		}
 
