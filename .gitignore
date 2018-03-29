@@ -2,6 +2,9 @@ bundle.js
 eisen-script.js
 synthesizer-webworker.js
 examples-generated.ts
+id_rsa
+id_rsa.pub
 node_modules
 bower_components
 typings
+package-lock.json
