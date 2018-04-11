@@ -9,7 +9,6 @@ if [ "$TRAVIS" = "true" ] && [ "$TRAVIS_BRANCH" = "master" ]; then
   cp -r ../node_modules/jquery node_modules/
   cp -r ../node_modules/bootstrap node_modules/
   cp -r ../node_modules/codemirror node_modules/
-  cp -r ../node_modules/codemirror node_modules/
 
   git init
   git config --global user.email "sb@unhexhexium.net"
