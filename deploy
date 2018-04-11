@@ -4,8 +4,13 @@ if [ "$TRAVIS" = "true" ] && [ "$TRAVIS_BRANCH" = "master" ]; then
   mkdir _site
   cd _site
   cp ../mega-structure.html .
-  cp ../bundle.js ../synthesizer-webworker.js ../OrbitControls.js ../codemirror-eisen-script-mode.js .
-  cp -r ../bower_components .
+  cp ../bundle.js ../synthesizer-webworker.js ../codemirror-eisen-script-mode.js .
+  mkdir node_modules
+  cp -r ../node_modules/jquery node_modules/
+  cp -r ../node_modules/bootstrap node_modules/
+  cp -r ../node_modules/codemirror node_modules/
+  cp -r ../node_modules/codemirror node_modules/
+
   git init
   git config --global user.email "sb@unhexhexium.net"
   git config --global user.name "ssrb (via Travis CI)"
