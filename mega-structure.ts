@@ -26,7 +26,7 @@
 // either expressed or implied, of the FreeBSD Project.
 import * as THREE from 'three';
 import * as CodeMirror from 'codemirror';
-import EisenScripts = require('./examples-generated');
+import * as EisenScripts from './examples-generated';
 import { ShapeInstance } from './structure';
 import { Progress } from './progress';
 
@@ -112,7 +112,8 @@ window.addEventListener('load', () => {
 	scene.add(lights[1]);
 	scene.add(lights[2]);
 
-	var controls = new THREE.OrbitControls(camera, renderer.domElement);
+	var OrbitControls = require('three-orbit-controls')(THREE)
+	var controls = new OrbitControls(camera, renderer.domElement);
 	controls.enableKeys = false;
 	controls.target.set(0, 0, 0);
 
@@ -168,6 +169,9 @@ window.addEventListener('load', () => {
 		progress.setPixelSize(s.height);
 	};
 	window.addEventListener('resize', doResize);
+
+	require("./codemirror-eisen-script-mode.js");
+	require('./node_modules/codemirror/addon/edit/matchbrackets.js');
 
 	var opts = {
 		lineNumbers: true,

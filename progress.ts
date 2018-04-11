@@ -27,6 +27,8 @@
 
 import * as THREE from 'three';
 
+declare function postMessage(message: any)
+
 export class Progress extends THREE.Mesh {
 
 	public constructor() {

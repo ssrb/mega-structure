@@ -25,14 +25,11 @@
 // of the authors and should not be interpreted as representing official policies,
 // either expressed or implied, of the FreeBSD Project.
 
-var glmat = require('./bower_components/gl-matrix/dist/gl-matrix-min.js');
-var tinycolor = require('./bower_components/tinycolor/tinycolor.js');
-import collections = require('./node_modules/typescript-collections');
-
+var glmat = require('gl-matrix');
+import * as tinycolor from 'tinycolor2';
+import * as collections from 'typescript-collections';
 import { Synthesizer } from './synthesizer';
 import { ShapeInstance } from './structure';
-
-var targetOrigin = "Synthesizer";
 
 // A cube
 var cubetriangles = [0, 1, 2, 1, 2, 3,
@@ -229,7 +226,7 @@ onmessage = function (e) {
 		var nshapesLast = 0;
 		return (shapes: ShapeInstance[], done: boolean) => {
 			if (shapes.length - nshapesLast >= 100 || done) {
-				this.postMessage({ type: 'progress', nshapes: shapes.length, nprocessed: 0 }, targetOrigin);
+				(<any>this).postMessage({ type: 'progress', nshapes: shapes.length, nprocessed: 0 });
 				nshapesLast = shapes.length;
 			}
 		};
@@ -247,7 +244,7 @@ onmessage = function (e) {
 		var nshapesLast = 0;
 		return (nshapes: number, done: boolean) => {
 			if (nshapes - nshapesLast >= 100 || done) {
-				this.postMessage({ type: 'progress', nshapes: structure.length, nprocessed: nshapes }, targetOrigin);
+				(<any>this).postMessage({ type: 'progress', nshapes: structure.length, nprocessed: nshapes });
 				nshapesLast = nshapes;
 			}
 		};
@@ -258,12 +255,12 @@ onmessage = function (e) {
 
 	console.log('Posting structure !');
 	tstamp = new Date().getTime();
-	worker.postMessage({
+	(<any>worker).postMessage({
 		type: 'done',
 		background: synth.background,
 		position: position.buffer,
 		color: color.buffer
-	}, targetOrigin, [position.buffer, color.buffer]);
+	}, [position.buffer, color.buffer]);
 	console.log('Posted in ' + (new Date().getTime() - tstamp) + 'ms');
 }
 

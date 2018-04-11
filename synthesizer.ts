@@ -26,12 +26,12 @@
 // either expressed or implied, of the FreeBSD Project.
 
 var eisenscript = require('./eisen-script');
-var glmat = require('./bower_components/gl-matrix/dist/gl-matrix-min.js');
-var tinycolor = require('./bower_components/tinycolor/dist/tinycolor-min.js');
-var seedrandom = require('./bower_components/seedrandom/seedrandom.min.js');
+var glmat = require('gl-matrix');
 
 import { ShapeInstance } from './structure';
-import collections = require('./node_modules/typescript-collections');
+import * as tinycolor from 'tinycolor2';
+import * as collections from 'typescript-collections';
+import * as seedrandom from 'seedrandom';
 
 enum Axis { X, Y, Z };
 
@@ -219,7 +219,7 @@ export class Synthesizer {
 					this.maxSize = (<MaxNode>this.ast[si]).max;
 					break;
 				case "seed":
-					this.prng = seedrandom((<SeedNode>this.ast[si]).seed);
+					this.prng = seedrandom((<SeedNode>this.ast[si]).seed.toString());
 					break;
 			}
 		}
@@ -422,7 +422,7 @@ export class Synthesizer {
 	private maxSize: number;
 	private minSize: number;
 	private index: collections.Dictionary<string, [number, DefStatement[]]>;
-	private prng: prng;
+	private prng: seedrandom.prng;
 	private progress: ProgressFunc;
 	public background: string;
 

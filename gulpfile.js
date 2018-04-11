@@ -8,16 +8,6 @@ var runSequence = require('run-sequence');
 var peg = require('gulp-peg');
 var gutil = require('gulp-util');
 
-gulp.task('.bower.install', function () {
-    var bower = require('gulp-bower');
-    return bower();
-});
-
-gulp.task('.bower.clean', function (cb) {
-    var del = require('del');
-    del(['lib/'], cb);
-});
-
 gulp.task('.npm.clean', function (cb) {
     var del = require('del');
     del(['node_modules/'], cb);
@@ -58,7 +48,7 @@ gulp.task('.examples', function (cb) {
 gulp.task('.ui', function () {
     var bundler = browserify({ debug: true })
         .add('./mega-structure.ts')
-        .plugin(tsify)
+        .plugin(tsify, { target: 'es6' })
         .transform('brfs')
 
     return bundler.bundle()
@@ -69,8 +59,7 @@ gulp.task('.ui', function () {
 gulp.task('.synth', function () {
     var bundler = browserify({ debug: true })
         .add('./synthesizer-webworker.ts')
-        .plugin(tsify)
-
+        .plugin(tsify, { target: 'es6' })
     return bundler.bundle()
         .pipe(source('synthesizer-webworker.js'))
         .pipe(gulp.dest('.'));
@@ -79,7 +68,7 @@ gulp.task('.synth', function () {
 gulp.task('.ui.release', function () {
     var bundler = browserify()
         .add('./mega-structure.ts')
-        .plugin(tsify)
+        .plugin(tsify, { target: 'es6' })
         .transform('brfs')
         .transform(uglify);
 
@@ -91,7 +80,7 @@ gulp.task('.ui.release', function () {
 gulp.task('.synth.release', function () {
     var bundler = browserify()
         .add('./synthesizer-webworker.ts')
-        .plugin(tsify)
+        .plugin(tsify, { target: 'es6' })
         .transform(uglify);
 
     return bundler.bundle()
@@ -99,14 +88,10 @@ gulp.task('.synth.release', function () {
         .pipe(gulp.dest('.'));
 });
 
-
 gulp.task('default', function (callback) {
-    runSequence('.bower.install',
-        '.peg',
+    runSequence('.peg',
         '.examples',
-        '.ui.release',
-        '.synth.release',
+        '.ui',
+        '.synth',
         callback);
 });
-
-
