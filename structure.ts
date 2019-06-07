@@ -29,5 +29,5 @@ import * as tinycolor from 'tinycolor2';
 export interface ShapeInstance {
 	shape: string;
 	geospace: Float32Array;
-	colorspace: ColorFormats.HSVA;
+	colorspace: tinycolor.ColorFormats.HSVA;
 }

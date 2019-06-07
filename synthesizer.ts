@@ -1,4 +1,4 @@
-// Copyright (c) 2016, Sebastien Sydney Robert Bigot
+1// Copyright (c) 2016, Sebastien Sydney Robert Bigot
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -121,7 +121,7 @@ interface SynthFrame {
 	globalDepth: number;
 	clauseDepthMap: collections.Dictionary<number, number>;
 	geospace: Float32Array;
-	colorspace: ColorFormats.HSVA;
+	colorspace: tinycolor.ColorFormats.HSVA;
 }
 
 function clamp(value: number, min: number, max: number): number {
@@ -289,7 +289,7 @@ export class Synthesizer {
 		globalDepth: number,
 		clauseDepthMap: collections.Dictionary<number, number>,
 		geospace: Float32Array,
-		colorspace: ColorFormats.HSVA,
+		colorspace: tinycolor.ColorFormats.HSVA,
 		queue: collections.Queue<SynthFrame>,
 		shapes: ShapeInstance[]): void {
 
@@ -326,12 +326,12 @@ export class Synthesizer {
 		}
 	}
 
-	private transform(transforms: Transformation[], geospace: Float32Array, colorspace: ColorFormats.HSVA): [Float32Array[], ColorFormats.HSVA[]] {
+	private transform(transforms: Transformation[], geospace: Float32Array, colorspace: tinycolor.ColorFormats.HSVA): [Float32Array[], tinycolor.ColorFormats.HSVA[]] {
 
 		var childGeospaces = new Array<Float32Array>();
-		var childColorspaces = new Array<ColorFormats.HSVA>();
+		var childColorspaces = new Array<tinycolor.ColorFormats.HSVA>();
 
-		var stack = new collections.Stack<[number, Float32Array, ColorFormats.HSVA]>();
+		var stack = new collections.Stack<[number, Float32Array, tinycolor.ColorFormats.HSVA]>();
 		stack.push([0, geospace, colorspace]);
 		while (!stack.isEmpty()) {
 			var [ti, childGeospace, childColorSpace] = stack.pop();
@@ -350,7 +350,7 @@ export class Synthesizer {
 		return [childGeospaces, childColorspaces];
 	}
 
-	private transformOne(sequence: ASTNode[], geospace: Float32Array, colorspace: ColorFormats.HSVA): [Float32Array, ColorFormats.HSVA] {
+	private transformOne(sequence: ASTNode[], geospace: Float32Array, colorspace: tinycolor.ColorFormats.HSVA): [Float32Array, tinycolor.ColorFormats.HSVA] {
 
 		var childGeospace = new Float32Array(geospace);
 		var childColorspace = { h: colorspace.h, s: colorspace.s, v: colorspace.v, a: colorspace.a };
