@@ -88,6 +88,18 @@ gulp.task('.synth.release', function () {
         .pipe(gulp.dest('.'));
 });
 
+gulp.task('install', function () {
+    gulp.src([
+        "mega-structure.html",
+        "bundle.js",
+        "synthesizer-webworker.js",
+        "codemirror-eisen-script-mode.js",
+        "node_modules/jquery/**",
+        "node_modules/bootstrap/**",
+        "node_modules/codemirror/**"
+    ], {base: "."}).pipe(gulp.dest('_site'));
+});
+
 gulp.task('default', function (callback) {
     runSequence('.peg',
         '.examples',
