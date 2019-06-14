@@ -38,6 +38,7 @@
     "gulp": "^3.9.1",
     "gulp-peg": "^0.2.0",
     "gulp-util": "^3.0.7",
+    "gulp-file": "^0.4.0",
     "jquery": "^3.3.1",
     "npm": "^5.8.0",
     "run-sequence": "^1.1.5",
