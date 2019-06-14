@@ -7,6 +7,7 @@ var uglify = require('uglifyify');
 var runSequence = require('run-sequence');
 var peg = require('gulp-peg');
 var gutil = require('gulp-util');
+var newfile = require('gulp-file');
 
 gulp.task('.npm.clean', function (cb) {
     var del = require('del');
@@ -98,6 +99,8 @@ gulp.task('install', function () {
         "node_modules/bootstrap/dist/**",
         "node_modules/codemirror/**"
     ], {base: "."}).pipe(gulp.dest('_site'));
+    
+    newfile('.nojekyll', '').pipe(gulp.dest('_site'));
 });
 
 gulp.task('default', function (callback) {
