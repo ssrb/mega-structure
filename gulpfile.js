@@ -94,8 +94,8 @@ gulp.task('install', function () {
         "bundle.js",
         "synthesizer-webworker.js",
         "codemirror-eisen-script-mode.js",
-        "node_modules/jquery/**",
-        "node_modules/bootstrap/**",
+        "node_modules/jquery/dist/**",
+        "node_modules/bootstrap/dist/**",
         "node_modules/codemirror/**"
     ], {base: "."}).pipe(gulp.dest('_site'));
 });
