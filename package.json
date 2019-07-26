@@ -2,9 +2,9 @@
   "name": "mega-structure",
   "version": "1.0.0",
   "description": "A structure synth clone",
-  "main": "mega-structure.js",
+  "main": "electron/main.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "electron ."
   },
   "repository": {
     "type": "git",
