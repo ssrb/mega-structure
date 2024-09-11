@@ -37,7 +37,7 @@ export class Progress extends THREE.Mesh {
 		canvas.width = canvas.height = 1024;
 		var texture = new THREE.Texture(canvas);
 
-		super(new THREE.PlaneBufferGeometry(1, 1), new THREE.MeshBasicMaterial({
+		super(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({
 			map: texture,
 			depthWrite: false,
 			depthTest: false,

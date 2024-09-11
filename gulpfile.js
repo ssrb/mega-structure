@@ -4,7 +4,7 @@ var browserify = require('browserify');
 var watchify = require('watchify');
 var tsify = require('tsify');
 var uglify = require('uglifyify');
-var runSequence = require('run-sequence');
+var runSequence = require('gulp4-run-sequence');
 var peg = require('gulp-peg');
 var gutil = require('gulp-util');
 
@@ -32,7 +32,7 @@ gulp.task('watch', function () {
 
 gulp.task('.peg', function () {
     return gulp.src("eisen-script.peg")
-        .pipe(peg().on("error", gutil.log))
+        //.pipe(peg().on("error", gutil.log))
         .pipe(gulp.dest('.'))
 });
 
@@ -48,7 +48,7 @@ gulp.task('.examples', function (cb) {
 gulp.task('.ui', function () {
     var bundler = browserify({ debug: true })
         .add('./mega-structure.ts')
-        .plugin(tsify, { target: 'es5' })
+        .plugin(tsify, { target: 'es2018' })
         .transform('brfs')
 
     return bundler.bundle()
@@ -59,7 +59,7 @@ gulp.task('.ui', function () {
 gulp.task('.synth', function () {
     var bundler = browserify({ debug: true })
         .add('./synthesizer-webworker.ts')
-        .plugin(tsify, { target: 'es5' })
+        .plugin(tsify, { target: 'es2018' })
     return bundler.bundle()
         .pipe(source('synthesizer-webworker.js'))
         .pipe(gulp.dest('.'));
@@ -68,7 +68,7 @@ gulp.task('.synth', function () {
 gulp.task('.ui.release', function () {
     var bundler = browserify()
         .add('./mega-structure.ts')
-        .plugin(tsify, { target: 'es5' })
+        .plugin(tsify, { target: 'es2018' })
         .transform('brfs')
         .transform(uglify);
 
@@ -80,7 +80,7 @@ gulp.task('.ui.release', function () {
 gulp.task('.synth.release', function () {
     var bundler = browserify()
         .add('./synthesizer-webworker.ts')
-        .plugin(tsify, { target: 'es5' })
+        .plugin(tsify, { target: 'es2018' })
         .transform(uglify);
 
     return bundler.bundle()

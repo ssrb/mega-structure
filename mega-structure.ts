@@ -84,7 +84,7 @@ window.addEventListener('load', () => {
 
 	var material =
 		new THREE.MeshPhongMaterial({
-			vertexColors: THREE.FaceColors,
+			vertexColors: true,
 			side: THREE.DoubleSide,
 			flatShading: true
 		});
@@ -112,9 +112,9 @@ window.addEventListener('load', () => {
 	scene.add(lights[1]);
 	scene.add(lights[2]);
 
-	var OrbitControls = require('three-orbit-controls')(THREE)
+	var OrbitControls = require('three/examples/jsm/controls/OrbitControls')(THREE)
 	var controls = new OrbitControls(camera, renderer.domElement);
-	controls.enableKeys = false;
+	//controls.enableKeys = false;
 	controls.target.set(0, 0, 0);
 
 	var turntable = true;
@@ -135,7 +135,8 @@ window.addEventListener('load', () => {
 		renderer.render(scene, camera);
 
 		if (progress.visible) {
-			var s = renderer.getSize();
+			var s;
+			renderer.getSize(s);
 			progress.animate(timeNow);
 			renderer.clear(false, true, true);
 			renderer.render(olayscene, olaycam);
@@ -158,7 +159,8 @@ window.addEventListener('load', () => {
 			renderer.setSize(window.innerWidth, window.innerHeight);
 		}
 
-		var s = renderer.getSize();
+		var s;
+		renderer.getSize(s);
 		camera.aspect = s.width / s.height;
 		camera.updateProjectionMatrix();
 
@@ -242,10 +244,10 @@ window.addEventListener('load', () => {
 			case 'done':
 				renderer.setClearColor(new THREE.Color(msg.background));
 				var geometry = new THREE.BufferGeometry();
-				geometry.addAttribute('position', new THREE.BufferAttribute(new Float32Array(msg.position), 3));
-				geometry.addAttribute('color', new THREE.BufferAttribute(new Float32Array(msg.color), 3));
+				geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(msg.position), 3));
+				geometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(msg.color), 3));
 				geometry.center();
-				mesh.geometry = geometry;
+				mesh.geometry = <any>geometry;
 				resetViewport();
 				console.log('Synth request processed in ' + (new Date().getTime() - tstamp) + 'ms');
 				break;
